@@ -2,9 +2,11 @@
 
 import { useState, useMemo } from 'react'
 import Image from 'next/image'
-import { Search, ShoppingBag } from 'lucide-react'
+import { Search, Star, Plus } from 'lucide-react'
 import { menuItems, categories } from '@/lib/menu-data'
 import type { MenuItem } from '@/lib/menu-data'
+import { useCart } from '@/lib/cart-context'
+import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 
 interface MenuSectionProps {
@@ -14,6 +16,17 @@ interface MenuSectionProps {
 export function MenuSection({ onItemClick }: MenuSectionProps) {
   const [activeCategory, setActiveCategory] = useState<string>('all')
   const [searchQuery, setSearchQuery] = useState('')
+  const { addItem } = useCart()
+
+  const handleQuickAdd = (e: React.MouseEvent, item: MenuItem) => {
+    e.stopPropagation()
+    addItem({
+      menuItem: item,
+      quantity: 1,
+      addOns: [],
+    })
+    toast.success(`${item.name} added to cart!`)
+  }
 
   const filteredItems = useMemo(() => {
     return menuItems.filter((item) => {
@@ -52,7 +65,7 @@ export function MenuSection({ onItemClick }: MenuSectionProps) {
         </div>
 
         {/* Sticky Filter Bar */}
-        <div className="sticky top-16 z-30 -mx-4 mb-8 bg-background/95 px-4 py-4 backdrop-blur-md lg:top-20">
+        <div className="sticky top-16 z-30 -mx-4 mb-10 border-b border-border bg-background/95 px-4 py-4 backdrop-blur-md lg:top-20">
           {/* Search */}
           <div className="relative mx-auto mb-4 max-w-md">
             <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -99,41 +112,59 @@ export function MenuSection({ onItemClick }: MenuSectionProps) {
         {groupedItems.map((group) => {
           const category = categories.find((c) => c.id === group.categoryId)
           return (
-            <div key={group.categoryId} id={`category-${group.categoryId}`} className="mb-12">
+            <div key={group.categoryId} id={`category-${group.categoryId}`} className="mb-14">
               <h3 className="mb-6 flex items-center gap-3 font-serif text-2xl font-bold text-foreground">
                 <span className="h-8 w-1 rounded-full bg-brand-red" />
                 {category?.name || group.categoryId}
               </h3>
-              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
                 {group.items.map((item) => (
-                  <button
+                  <div
                     key={item.id}
                     onClick={() => onItemClick(item)}
-                    className="group flex items-center gap-4 rounded-xl border border-border bg-card p-4 text-left shadow-sm transition-all hover:shadow-md"
+                    className="group cursor-pointer overflow-hidden rounded-2xl border border-border bg-card shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg"
                   >
-                    <div className="relative h-20 w-20 flex-shrink-0 overflow-hidden rounded-xl">
+                    {/* Card Image */}
+                    <div className="relative h-44 w-full overflow-hidden">
                       <Image
                         src={item.image}
                         alt={item.name}
                         fill
-                        className="object-cover transition-transform duration-300 group-hover:scale-110"
+                        className="object-cover transition-transform duration-500 group-hover:scale-110"
                       />
+                      <div className="absolute inset-0 bg-gradient-to-t from-brand-dark/40 via-transparent to-transparent" />
+                      {/* Rating */}
+                      <div className="absolute right-3 top-3 flex items-center gap-1 rounded-full bg-brand-dark/70 px-2 py-0.5 backdrop-blur-sm">
+                        <Star className="h-3 w-3 fill-brand-gold text-brand-gold" />
+                        <span className="text-xs font-semibold text-primary-foreground">{item.rating}</span>
+                      </div>
+                      {item.popular && (
+                        <span className="absolute left-3 top-3 rounded-full bg-brand-gold px-2.5 py-0.5 text-xs font-bold text-brand-dark">
+                          Best Seller
+                        </span>
+                      )}
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <h4 className="mb-1 text-sm font-bold text-foreground">{item.name}</h4>
-                      <p className="mb-2 text-xs leading-relaxed text-muted-foreground line-clamp-2">
+
+                    {/* Card Content */}
+                    <div className="p-4">
+                      <h4 className="mb-1 text-base font-bold text-foreground">{item.name}</h4>
+                      <p className="mb-3 text-xs leading-relaxed text-muted-foreground line-clamp-2">
                         {item.description}
                       </p>
                       <div className="flex items-center justify-between">
-                        <span className="text-sm font-bold text-brand-red">
+                        <span className="text-lg font-bold text-brand-red">
                           Rs. {item.price.toLocaleString()}
                         </span>
-                        <span className="flex h-7 w-7 items-center justify-center rounded-full bg-brand-red/10 text-brand-red transition-colors group-hover:bg-brand-red group-hover:text-primary-foreground">
-                          <ShoppingBag className="h-3.5 w-3.5" />
-                        </span>
+                        <button
+                          onClick={(e) => handleQuickAdd(e, item)}
+                          className="flex h-9 w-9 items-center justify-center rounded-full bg-brand-red text-primary-foreground transition-all hover:scale-110 hover:bg-brand-red/90 active:scale-95"
+                          aria-label={`Add ${item.name} to cart`}
+                        >
+                          <Plus className="h-4 w-4" />
+                        </button>
                       </div>
                     </div>
-                  </button>
+                  </div>
                 ))}
               </div>
             </div>

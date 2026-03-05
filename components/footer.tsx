@@ -30,7 +30,8 @@ export function Footer() {
               alt="Fatty Patty"
               width={70}
               height={70}
-              className="mb-4 rounded-full"
+              className="mb-4 h-16 w-16 rounded-full"
+              style={{ width: 'auto', height: 'auto' }}
             />
             <p className="mb-4 text-sm leading-relaxed text-neutral-400">
               Premium smashed burgers, loaded fries and signature bowls. Serving Karachi&apos;s finest since 2020.

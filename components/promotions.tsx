@@ -1,6 +1,6 @@
 "use client"
 
-import { Flame, Utensils } from 'lucide-react'
+import { Flame, Utensils, Phone } from 'lucide-react'
 
 const offers = [
   {
@@ -53,6 +53,27 @@ export function Promotions() {
               </div>
             </div>
           ))}
+        </div>
+
+        {/* WhatsApp Order CTA */}
+        <div className="mt-10 flex flex-col items-center justify-center gap-4 rounded-2xl border border-brand-gold/30 bg-brand-gold/10 p-8 text-center sm:flex-row sm:text-left">
+          <div className="flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-full bg-green-500">
+            <Phone className="h-6 w-6 text-primary-foreground" />
+          </div>
+          <div className="flex-1">
+            <h3 className="mb-1 text-lg font-bold text-foreground">Order via WhatsApp</h3>
+            <p className="text-sm text-muted-foreground">
+              Send us your order along with your pin location and get it delivered hot and fresh!
+            </p>
+          </div>
+          <a
+            href="https://wa.me/923342024000"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex-shrink-0 rounded-full bg-green-500 px-6 py-3 text-sm font-bold text-primary-foreground transition-all hover:bg-green-600 hover:scale-105"
+          >
+            0334 2024 000
+          </a>
         </div>
       </div>
     </section>

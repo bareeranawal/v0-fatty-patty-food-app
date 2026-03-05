@@ -10,9 +10,7 @@ import { cn } from '@/lib/utils'
 const navLinks = [
   { name: 'Home', href: '#home' },
   { name: 'Menu', href: '#menu' },
-  { name: 'Categories', href: '#categories' },
-  { name: 'Offers', href: '#offers' },
-  { name: 'Reviews', href: '#reviews' },
+  { name: 'Deals', href: '#offers' },
   { name: 'Contact', href: '#contact' },
 ]
 
@@ -40,14 +38,18 @@ export function Navbar() {
     >
       <div className="mx-auto flex max-w-7xl items-center justify-between px-4 lg:px-8">
         {/* Logo */}
-        <Link href="#home" className="flex-shrink-0">
+        <Link href="#home" className="flex items-center gap-3 flex-shrink-0">
           <Image
             src="/images/logo.png"
             alt="Fatty Patty"
-            width={isScrolled ? 50 : 60}
-            height={isScrolled ? 50 : 60}
-            className="rounded-full transition-all duration-300"
+            width={60}
+            height={60}
+            className={`rounded-full transition-all duration-300 ${isScrolled ? 'h-10 w-10' : 'h-12 w-12'}`}
+            style={{ width: 'auto', height: 'auto' }}
           />
+          <span className={`hidden font-serif font-bold text-primary-foreground transition-all duration-300 sm:block ${isScrolled ? 'text-lg' : 'text-xl'}`}>
+            Fatty Patty
+          </span>
         </Link>
 
         {/* Desktop Navigation */}
