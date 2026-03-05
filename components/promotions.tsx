@@ -26,7 +26,7 @@ export function Promotions({ onDealClick }: PromotionsProps) {
           {deals.map((deal) => (
             <button
               key={deal.id}
-              onClick={() => onDealClick(deal)}
+              onClick={() => { console.log("[v0] Deal clicked:", deal.id, deal.title); onDealClick(deal) }}
               className="group relative overflow-hidden rounded-2xl border border-border bg-card text-left shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl"
             >
               <div className="relative h-44 w-full overflow-hidden">

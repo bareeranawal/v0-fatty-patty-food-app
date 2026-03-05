@@ -78,9 +78,10 @@ export default function HomePage() {
       {selectedDeal && (
         <DealModal
           deal={selectedDeal}
-          onClose={() => setSelectedDeal(null)}
+          onClose={() => { console.log("[v0] DealModal closing"); setSelectedDeal(null) }}
         />
       )}
+      {(() => { console.log("[v0] page render - selectedDeal:", selectedDeal?.id ?? "null", "selectedItem:", selectedItem?.id ?? "null"); return null })()}
     </>
   )
 }

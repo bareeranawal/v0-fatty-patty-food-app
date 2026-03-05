@@ -46,6 +46,7 @@ export function DealModal({ deal, onClose }: DealModalProps) {
   }
 
   const handleAddToCart = () => {
+    console.log("[v0] handleAddToCart called, allDrinksSelected:", allDrinksSelected, "selectedDrinks:", selectedDrinks)
     if (!allDrinksSelected) {
       toast.error('Please select all drink choices before adding to cart')
       return
@@ -57,7 +58,7 @@ export function DealModal({ deal, onClose }: DealModalProps) {
       price: 0,
     }))
 
-    addItem({
+    const cartPayload = {
       menuItem: {
         id: deal.id,
         name: `${deal.name} - ${deal.title}`,
@@ -70,7 +71,10 @@ export function DealModal({ deal, onClose }: DealModalProps) {
       quantity,
       addOns: drinkAddOns,
       specialInstructions: specialInstructions || undefined,
-    })
+    }
+    console.log("[v0] Adding deal to cart:", JSON.stringify(cartPayload))
+    addItem(cartPayload)
+    console.log("[v0] addItem called successfully")
     toast.success(`${deal.title} added to cart!`)
     onClose()
   }
