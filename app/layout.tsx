@@ -1,7 +1,9 @@
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
 import { Inter, Playfair_Display } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
+import { ThemeProvider } from 'next-themes'
 import { CartProvider } from '@/lib/cart-context'
+import { OrderProvider } from '@/lib/order-context'
 import { Toaster } from 'sonner'
 import './globals.css'
 
@@ -17,18 +19,29 @@ export const metadata: Metadata = {
   },
 }
 
+export const viewport: Viewport = {
+  themeColor: '#C1121F',
+  width: 'device-width',
+  initialScale: 1,
+  userScalable: false,
+}
+
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en" className={`${inter.variable} ${playfair.variable}`}>
+    <html lang="en" className={`${inter.variable} ${playfair.variable}`} suppressHydrationWarning>
       <body className="font-sans antialiased">
-        <CartProvider>
-          {children}
-          <Toaster position="bottom-right" richColors />
-        </CartProvider>
+        <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false}>
+          <OrderProvider>
+            <CartProvider>
+              {children}
+              <Toaster position="bottom-right" richColors />
+            </CartProvider>
+          </OrderProvider>
+        </ThemeProvider>
         <Analytics />
       </body>
     </html>

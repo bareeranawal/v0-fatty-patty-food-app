@@ -68,10 +68,10 @@ export function Reviews() {
   }
 
   return (
-    <section id="reviews" className="bg-background py-20 lg:py-28">
+    <section id="reviews" className="bg-background py-14 lg:py-20">
       <div className="mx-auto max-w-7xl px-4 lg:px-8">
-        <div className="mb-12 text-center">
-          <span className="mb-3 inline-block text-sm font-semibold uppercase tracking-widest text-brand-red">
+        <div className="mb-10 text-center">
+          <span className="mb-3 inline-block text-sm font-semibold uppercase tracking-widest text-[#C1121F]">
             Testimonials
           </span>
           <h2 className="font-serif text-3xl font-bold text-foreground md:text-4xl lg:text-5xl text-balance">
@@ -80,14 +80,14 @@ export function Reviews() {
         </div>
 
         <div className="relative">
-          <div className="grid gap-6 md:grid-cols-3">
+          <div className="grid gap-5 md:grid-cols-3">
             {getVisibleReviews().map((review, index) => (
               <div
                 key={`${review.name}-${index}`}
-                className="rounded-2xl border border-border bg-card p-6 shadow-sm transition-all hover:shadow-md"
+                className="rounded-2xl border border-border bg-card p-6 shadow-sm transition-all duration-300 hover:shadow-md hover:-translate-y-0.5"
               >
                 <div className="mb-4 flex items-center gap-3">
-                  <div className="flex h-11 w-11 items-center justify-center rounded-full bg-brand-red text-sm font-bold text-primary-foreground">
+                  <div className="flex h-11 w-11 items-center justify-center rounded-full bg-[#C1121F] text-sm font-bold text-white">
                     {review.initial}
                   </div>
                   <div>
@@ -98,7 +98,7 @@ export function Reviews() {
                           key={i}
                           className={`h-3.5 w-3.5 ${
                             i < review.rating
-                              ? 'fill-brand-gold text-brand-gold'
+                              ? 'fill-[#F4A261] text-[#F4A261]'
                               : 'fill-muted text-muted'
                           }`}
                         />
@@ -111,11 +111,10 @@ export function Reviews() {
             ))}
           </div>
 
-          {/* Navigation */}
-          <div className="mt-8 flex items-center justify-center gap-4">
+          <div className="mt-6 flex items-center justify-center gap-4">
             <button
               onClick={prev}
-              className="flex h-10 w-10 items-center justify-center rounded-full border border-border bg-card text-foreground transition-colors hover:bg-brand-red hover:text-primary-foreground hover:border-brand-red"
+              className="flex h-10 w-10 items-center justify-center rounded-full border border-border bg-card text-foreground transition-colors hover:bg-[#C1121F] hover:text-white hover:border-[#C1121F]"
               aria-label="Previous reviews"
             >
               <ChevronLeft className="h-4 w-4" />
@@ -126,7 +125,7 @@ export function Reviews() {
                   key={i}
                   onClick={() => setCurrent(i)}
                   className={`h-2 rounded-full transition-all ${
-                    i === current ? 'w-6 bg-brand-red' : 'w-2 bg-border hover:bg-muted-foreground'
+                    i === current ? 'w-6 bg-[#C1121F]' : 'w-2 bg-border hover:bg-muted-foreground'
                   }`}
                   aria-label={`Go to review ${i + 1}`}
                 />
@@ -134,7 +133,7 @@ export function Reviews() {
             </div>
             <button
               onClick={next}
-              className="flex h-10 w-10 items-center justify-center rounded-full border border-border bg-card text-foreground transition-colors hover:bg-brand-red hover:text-primary-foreground hover:border-brand-red"
+              className="flex h-10 w-10 items-center justify-center rounded-full border border-border bg-card text-foreground transition-colors hover:bg-[#C1121F] hover:text-white hover:border-[#C1121F]"
               aria-label="Next reviews"
             >
               <ChevronRight className="h-4 w-4" />

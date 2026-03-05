@@ -3,16 +3,18 @@
 import { useState, useEffect, useRef, useMemo } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { Search, ShoppingBag, Menu, X, Info } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import { Search, ShoppingBag, Menu, X, Info, Sun, Moon, MapPin, Store } from 'lucide-react'
+import { useTheme } from 'next-themes'
 import { useCart } from '@/lib/cart-context'
+import { useOrder } from '@/lib/order-context'
 import { menuItems } from '@/lib/menu-data'
 import type { MenuItem } from '@/lib/menu-data'
 import { cn } from '@/lib/utils'
 
 const navLinks = [
-  { name: 'Home', href: '#home' },
-  { name: 'Menu', href: '#menu' },
-  { name: 'Deals', href: '#offers' },
+  { name: 'Home', href: '/' },
+  { name: 'Menu', href: '/menu' },
   { name: 'About Us', href: '#about' },
   { name: 'Contact', href: '#contact' },
 ]
@@ -28,21 +30,23 @@ export function Navbar({ onItemClick }: NavbarProps) {
   const [searchQuery, setSearchQuery] = useState('')
   const [showAbout, setShowAbout] = useState(false)
   const { totalItems, setIsCartOpen } = useCart()
+  const { orderType, setOrderType } = useOrder()
+  const { theme, setTheme } = useTheme()
+  const [mounted, setMounted] = useState(false)
   const searchInputRef = useRef<HTMLInputElement>(null)
   const searchContainerRef = useRef<HTMLDivElement>(null)
+  const router = useRouter()
+
+  useEffect(() => { setMounted(true) }, [])
 
   useEffect(() => {
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 20)
-    }
+    const handleScroll = () => setIsScrolled(window.scrollY > 20)
     window.addEventListener('scroll', handleScroll)
     return () => window.removeEventListener('scroll', handleScroll)
   }, [])
 
   useEffect(() => {
-    if (isSearchOpen && searchInputRef.current) {
-      searchInputRef.current.focus()
-    }
+    if (isSearchOpen && searchInputRef.current) searchInputRef.current.focus()
   }, [isSearchOpen])
 
   useEffect(() => {
@@ -52,9 +56,7 @@ export function Navbar({ onItemClick }: NavbarProps) {
         setSearchQuery('')
       }
     }
-    if (isSearchOpen) {
-      document.addEventListener('mousedown', handleClickOutside)
-    }
+    if (isSearchOpen) document.addEventListener('mousedown', handleClickOutside)
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [isSearchOpen])
 
@@ -72,9 +74,17 @@ export function Navbar({ onItemClick }: NavbarProps) {
   const handleResultClick = (item: MenuItem) => {
     setIsSearchOpen(false)
     setSearchQuery('')
-    if (onItemClick) {
-      onItemClick(item)
-    }
+    if (onItemClick) onItemClick(item)
+  }
+
+  const toggleTheme = () => {
+    document.documentElement.classList.add('transitioning')
+    setTheme(theme === 'dark' ? 'light' : 'dark')
+    setTimeout(() => document.documentElement.classList.remove('transitioning'), 350)
+  }
+
+  const handleToggleOrderType = (type: 'delivery' | 'pickup') => {
+    setOrderType(type)
   }
 
   return (
@@ -83,14 +93,14 @@ export function Navbar({ onItemClick }: NavbarProps) {
         className={cn(
           'fixed top-0 left-0 right-0 z-50 transition-all duration-300',
           isScrolled
-            ? 'bg-brand-red/95 backdrop-blur-md shadow-lg'
-            : 'bg-brand-red'
+            ? 'bg-[#C1121F]/95 backdrop-blur-md shadow-lg'
+            : 'bg-[#C1121F]'
         )}
       >
         <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-2 lg:px-8">
           {/* Logo */}
-          <Link href="#home" className="flex items-center gap-2.5 flex-shrink-0">
-            <div className="relative h-10 w-10 flex-shrink-0 overflow-hidden rounded-full border-2 border-brand-gold/40">
+          <Link href="/" className="flex items-center gap-2.5 flex-shrink-0">
+            <div className="relative h-10 w-10 flex-shrink-0 overflow-hidden rounded-full border-2 border-[#F4A261]/40">
               <Image
                 src="/images/logo.png"
                 alt="Fatty Patty"
@@ -100,19 +110,49 @@ export function Navbar({ onItemClick }: NavbarProps) {
                 priority
               />
             </div>
-            <span className="hidden font-serif text-lg font-bold text-primary-foreground sm:block">
+            <span className="hidden font-serif text-lg font-bold text-white sm:block">
               Fatty Patty
             </span>
           </Link>
 
-          {/* Desktop Navigation */}
-          <div className="hidden items-center gap-6 lg:flex">
+          {/* Delivery / Pickup Toggle (Pill Style) */}
+          <div className="hidden items-center sm:flex">
+            <div className="flex rounded-full border border-white/20 bg-white/10 p-0.5">
+              <button
+                onClick={() => handleToggleOrderType('delivery')}
+                className={cn(
+                  'flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-semibold transition-all',
+                  orderType === 'delivery'
+                    ? 'bg-white text-[#C1121F] shadow-sm'
+                    : 'text-white/70 hover:text-white'
+                )}
+              >
+                <MapPin className="h-3 w-3" />
+                Delivery
+              </button>
+              <button
+                onClick={() => handleToggleOrderType('pickup')}
+                className={cn(
+                  'flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-semibold transition-all',
+                  orderType === 'pickup'
+                    ? 'bg-white text-[#C1121F] shadow-sm'
+                    : 'text-white/70 hover:text-white'
+                )}
+              >
+                <Store className="h-3 w-3" />
+                Pickup
+              </button>
+            </div>
+          </div>
+
+          {/* Desktop Nav */}
+          <div className="hidden items-center gap-5 lg:flex">
             {navLinks.map((link) =>
               link.name === 'About Us' ? (
                 <button
                   key={link.name}
                   onClick={() => setShowAbout(true)}
-                  className="text-sm font-medium tracking-wide text-primary-foreground/80 transition-colors hover:text-brand-gold"
+                  className="text-sm font-medium tracking-wide text-white/80 transition-colors hover:text-[#F4A261]"
                 >
                   {link.name}
                 </button>
@@ -120,7 +160,7 @@ export function Navbar({ onItemClick }: NavbarProps) {
                 <Link
                   key={link.name}
                   href={link.href}
-                  className="text-sm font-medium tracking-wide text-primary-foreground/80 transition-colors hover:text-brand-gold"
+                  className="text-sm font-medium tracking-wide text-white/80 transition-colors hover:text-[#F4A261]"
                 >
                   {link.name}
                 </Link>
@@ -129,7 +169,18 @@ export function Navbar({ onItemClick }: NavbarProps) {
           </div>
 
           {/* Right Actions */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5">
+            {/* Theme Toggle */}
+            {mounted && (
+              <button
+                onClick={toggleTheme}
+                className="rounded-full p-2 text-white/80 transition-colors hover:bg-white/10 hover:text-white"
+                aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
+              >
+                {theme === 'dark' ? <Sun className="h-4.5 w-4.5" /> : <Moon className="h-4.5 w-4.5" />}
+              </button>
+            )}
+
             {/* Search */}
             <div ref={searchContainerRef} className="relative">
               {isSearchOpen ? (
@@ -141,21 +192,17 @@ export function Navbar({ onItemClick }: NavbarProps) {
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     onKeyDown={(e) => {
-                      if (e.key === 'Escape') {
-                        setIsSearchOpen(false)
-                        setSearchQuery('')
-                      }
+                      if (e.key === 'Escape') { setIsSearchOpen(false); setSearchQuery('') }
                     }}
-                    className="w-40 rounded-full bg-primary-foreground/15 px-4 py-1.5 text-sm text-primary-foreground placeholder:text-primary-foreground/50 focus:bg-primary-foreground/20 focus:outline-none sm:w-56"
+                    className="w-40 rounded-full bg-white/15 px-4 py-1.5 text-sm text-white placeholder:text-white/50 focus:bg-white/20 focus:outline-none sm:w-52"
                   />
                   <button
                     onClick={() => { setIsSearchOpen(false); setSearchQuery('') }}
-                    className="ml-1 rounded-full p-1.5 text-primary-foreground/80 hover:text-primary-foreground"
+                    className="ml-1 rounded-full p-1.5 text-white/80 hover:text-white"
                     aria-label="Close search"
                   >
                     <X className="h-4 w-4" />
                   </button>
-                  {/* Search Results Dropdown */}
                   {searchQuery.trim() && (
                     <div className="absolute right-0 top-full mt-2 w-72 overflow-hidden rounded-xl border border-border bg-card shadow-xl sm:w-80">
                       {searchResults.length > 0 ? (
@@ -173,7 +220,7 @@ export function Navbar({ onItemClick }: NavbarProps) {
                                 <p className="text-sm font-semibold text-foreground truncate">{item.name}</p>
                                 <p className="text-xs text-muted-foreground truncate">{item.description}</p>
                               </div>
-                              <span className="flex-shrink-0 text-sm font-bold text-brand-red">
+                              <span className="flex-shrink-0 text-sm font-bold text-[#C1121F]">
                                 Rs. {item.price.toLocaleString()}
                               </span>
                             </button>
@@ -190,7 +237,7 @@ export function Navbar({ onItemClick }: NavbarProps) {
               ) : (
                 <button
                   onClick={() => setIsSearchOpen(true)}
-                  className="rounded-full p-2 text-primary-foreground/80 transition-colors hover:bg-primary-foreground/10 hover:text-primary-foreground"
+                  className="rounded-full p-2 text-white/80 transition-colors hover:bg-white/10 hover:text-white"
                   aria-label="Search menu"
                 >
                   <Search className="h-5 w-5" />
@@ -198,14 +245,15 @@ export function Navbar({ onItemClick }: NavbarProps) {
               )}
             </div>
 
+            {/* Cart */}
             <button
               onClick={() => setIsCartOpen(true)}
-              className="relative rounded-full p-2 text-primary-foreground/80 transition-colors hover:bg-primary-foreground/10 hover:text-primary-foreground"
+              className="relative rounded-full p-2 text-white/80 transition-colors hover:bg-white/10 hover:text-white"
               aria-label="Shopping cart"
             >
               <ShoppingBag className="h-5 w-5" />
               {totalItems > 0 && (
-                <span className="absolute -right-0.5 -top-0.5 flex h-5 w-5 items-center justify-center rounded-full bg-brand-gold text-xs font-bold text-brand-dark">
+                <span className="absolute -right-0.5 -top-0.5 flex h-5 w-5 items-center justify-center rounded-full bg-[#F4A261] text-xs font-bold text-[#1a1a1a]">
                   {totalItems}
                 </span>
               )}
@@ -213,7 +261,7 @@ export function Navbar({ onItemClick }: NavbarProps) {
 
             {/* Mobile Menu Toggle */}
             <button
-              className="rounded-full p-2 text-primary-foreground/80 transition-colors hover:bg-primary-foreground/10 lg:hidden"
+              className="rounded-full p-2 text-white/80 transition-colors hover:bg-white/10 lg:hidden"
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
               aria-label="Toggle menu"
             >
@@ -226,16 +274,40 @@ export function Navbar({ onItemClick }: NavbarProps) {
         <div
           className={cn(
             'overflow-hidden transition-all duration-300 lg:hidden',
-            isMobileMenuOpen ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'
+            isMobileMenuOpen ? 'max-h-[500px] opacity-100' : 'max-h-0 opacity-0'
           )}
         >
           <div className="mx-auto flex max-w-7xl flex-col gap-1 px-4 pb-3 pt-1">
+            {/* Mobile Delivery/Pickup Toggle */}
+            <div className="mb-2 flex rounded-full border border-white/20 bg-white/10 p-0.5">
+              <button
+                onClick={() => handleToggleOrderType('delivery')}
+                className={cn(
+                  'flex flex-1 items-center justify-center gap-1.5 rounded-full px-3 py-2 text-xs font-semibold transition-all',
+                  orderType === 'delivery' ? 'bg-white text-[#C1121F]' : 'text-white/70'
+                )}
+              >
+                <MapPin className="h-3 w-3" />
+                Delivery
+              </button>
+              <button
+                onClick={() => handleToggleOrderType('pickup')}
+                className={cn(
+                  'flex flex-1 items-center justify-center gap-1.5 rounded-full px-3 py-2 text-xs font-semibold transition-all',
+                  orderType === 'pickup' ? 'bg-white text-[#C1121F]' : 'text-white/70'
+                )}
+              >
+                <Store className="h-3 w-3" />
+                Pickup
+              </button>
+            </div>
+
             {navLinks.map((link) =>
               link.name === 'About Us' ? (
                 <button
                   key={link.name}
                   onClick={() => { setShowAbout(true); setIsMobileMenuOpen(false) }}
-                  className="rounded-lg px-4 py-2.5 text-left text-sm font-medium text-primary-foreground/80 transition-colors hover:bg-primary-foreground/10 hover:text-primary-foreground"
+                  className="rounded-lg px-4 py-2.5 text-left text-sm font-medium text-white/80 transition-colors hover:bg-white/10 hover:text-white"
                 >
                   {link.name}
                 </button>
@@ -244,7 +316,7 @@ export function Navbar({ onItemClick }: NavbarProps) {
                   key={link.name}
                   href={link.href}
                   onClick={() => setIsMobileMenuOpen(false)}
-                  className="rounded-lg px-4 py-2.5 text-sm font-medium text-primary-foreground/80 transition-colors hover:bg-primary-foreground/10 hover:text-primary-foreground"
+                  className="rounded-lg px-4 py-2.5 text-sm font-medium text-white/80 transition-colors hover:bg-white/10 hover:text-white"
                 >
                   {link.name}
                 </Link>
@@ -257,11 +329,11 @@ export function Navbar({ onItemClick }: NavbarProps) {
       {/* About Us Modal */}
       {showAbout && (
         <div
-          className="fixed inset-0 z-[70] flex items-center justify-center bg-brand-dark/60 p-4 backdrop-blur-sm"
+          className="fixed inset-0 z-[70] flex items-center justify-center bg-[#1a1a1a]/60 p-4 backdrop-blur-sm"
           onClick={() => setShowAbout(false)}
         >
           <div
-            className="relative w-full max-w-lg overflow-hidden rounded-2xl bg-card shadow-2xl"
+            className="relative w-full max-w-lg overflow-hidden rounded-2xl bg-card shadow-2xl animate-fade-in-up"
             onClick={(e) => e.stopPropagation()}
             role="dialog"
             aria-modal="true"
@@ -269,13 +341,13 @@ export function Navbar({ onItemClick }: NavbarProps) {
           >
             <button
               onClick={() => setShowAbout(false)}
-              className="absolute right-3 top-3 z-10 flex h-9 w-9 items-center justify-center rounded-full bg-brand-dark/50 text-primary-foreground backdrop-blur-sm transition-colors hover:bg-brand-dark/70"
+              className="absolute right-3 top-3 z-10 flex h-9 w-9 items-center justify-center rounded-full bg-[#1a1a1a]/50 text-white backdrop-blur-sm transition-colors hover:bg-[#1a1a1a]/70"
               aria-label="Close"
             >
               <X className="h-4 w-4" />
             </button>
-            <div className="bg-brand-red px-8 pb-6 pt-8 text-center">
-              <div className="mx-auto mb-4 h-20 w-20 overflow-hidden rounded-full border-3 border-brand-gold/40">
+            <div className="bg-[#C1121F] px-8 pb-6 pt-8 text-center">
+              <div className="mx-auto mb-4 h-20 w-20 overflow-hidden rounded-full border-3 border-[#F4A261]/40">
                 <Image
                   src="/images/logo.png"
                   alt="Fatty Patty"
@@ -284,18 +356,18 @@ export function Navbar({ onItemClick }: NavbarProps) {
                   className="h-full w-full object-cover"
                 />
               </div>
-              <h2 className="font-serif text-2xl font-bold text-primary-foreground">About Fatty Patty</h2>
-              <span className="mt-1 inline-block text-sm text-primary-foreground/70">Established 2020</span>
+              <h2 className="font-serif text-2xl font-bold text-white">About Fatty Patty</h2>
+              <span className="mt-1 inline-block text-sm text-white/70">Established 2020</span>
             </div>
             <div className="p-8">
               <p className="text-sm leading-relaxed text-muted-foreground">
                 Established in 2020, Fatty Patty is dedicated to delivering bold flavors and premium quality fast food. From juicy burgers to satisfying bowls and crispy tenders, we focus on freshness, taste, and consistency. Our mission is simple: serve happiness in every bite.
               </p>
               <div className="mt-6 flex items-center gap-3">
-                <Info className="h-5 w-5 flex-shrink-0 text-brand-red" />
+                <Info className="h-5 w-5 flex-shrink-0 text-[#C1121F]" />
                 <div>
                   <p className="text-xs font-semibold text-foreground">Our Locations</p>
-                  <p className="text-xs text-muted-foreground">Creek Walk DHA Phase 8 &bull; Habit City Tipu Sultan</p>
+                  <p className="text-xs text-muted-foreground">{"Creek Walk DHA Phase 8 \u2022 Habit City Tipu Sultan"}</p>
                 </div>
               </div>
             </div>

@@ -4,6 +4,7 @@ import { useState } from 'react'
 import Image from 'next/image'
 import { X, Plus, Minus, Trash2, ShoppingBag } from 'lucide-react'
 import { useCart } from '@/lib/cart-context'
+import { useOrder } from '@/lib/order-context'
 import { menuItems } from '@/lib/menu-data'
 import type { MenuItem } from '@/lib/menu-data'
 import { cn } from '@/lib/utils'
@@ -15,9 +16,10 @@ interface CartDrawerProps {
 
 export function CartDrawer({ onItemClick }: CartDrawerProps) {
   const { items, removeItem, updateQuantity, isCartOpen, setIsCartOpen, subtotal, totalItems } = useCart()
+  const { orderType } = useOrder()
   const [showCheckout, setShowCheckout] = useState(false)
 
-  const deliveryFee = subtotal > 0 ? 150 : 0
+  const deliveryFee = orderType === 'delivery' && subtotal > 0 ? 150 : 0
   const total = subtotal + deliveryFee
 
   const handleItemClick = (itemId: string) => {
@@ -30,29 +32,26 @@ export function CartDrawer({ onItemClick }: CartDrawerProps) {
 
   return (
     <>
-      {/* Overlay */}
       <div
         className={cn(
-          'fixed inset-0 z-50 bg-brand-dark/50 backdrop-blur-sm transition-opacity duration-300',
+          'fixed inset-0 z-50 bg-[#1a1a1a]/50 backdrop-blur-sm transition-opacity duration-300',
           isCartOpen ? 'pointer-events-auto opacity-100' : 'pointer-events-none opacity-0'
         )}
         onClick={() => setIsCartOpen(false)}
       />
 
-      {/* Drawer */}
       <div
         className={cn(
           'fixed right-0 top-0 z-50 flex h-full w-full max-w-md flex-col bg-card shadow-2xl transition-transform duration-300 ease-in-out',
           isCartOpen ? 'translate-x-0' : 'translate-x-full'
         )}
       >
-        {/* Header */}
         <div className="flex items-center justify-between border-b border-border p-5">
           <div className="flex items-center gap-3">
-            <ShoppingBag className="h-5 w-5 text-brand-red" />
+            <ShoppingBag className="h-5 w-5 text-[#C1121F]" />
             <h2 className="text-lg font-bold text-foreground">Your Cart</h2>
             {totalItems > 0 && (
-              <span className="flex h-6 w-6 items-center justify-center rounded-full bg-brand-red text-xs font-bold text-primary-foreground">
+              <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[#C1121F] text-xs font-bold text-white">
                 {totalItems}
               </span>
             )}
@@ -66,7 +65,6 @@ export function CartDrawer({ onItemClick }: CartDrawerProps) {
           </button>
         </div>
 
-        {/* Items */}
         <div className="flex-1 overflow-y-auto p-5">
           {items.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16">
@@ -83,9 +81,8 @@ export function CartDrawer({ onItemClick }: CartDrawerProps) {
                 return (
                   <div
                     key={`${item.menuItem.id}-${index}`}
-                    className="flex gap-3 rounded-xl border border-border bg-background p-3 transition-colors hover:border-brand-red/30"
+                    className="flex gap-3 rounded-xl border border-border bg-background p-3 transition-all duration-200 hover:border-[#C1121F]/30"
                   >
-                    {/* Clickable image */}
                     <button
                       onClick={() => handleItemClick(item.menuItem.id)}
                       className="relative h-16 w-16 flex-shrink-0 overflow-hidden rounded-lg"
@@ -104,7 +101,7 @@ export function CartDrawer({ onItemClick }: CartDrawerProps) {
                           onClick={() => handleItemClick(item.menuItem.id)}
                           className="text-left"
                         >
-                          <h4 className="text-sm font-bold text-foreground truncate hover:text-brand-red transition-colors">
+                          <h4 className="text-sm font-bold text-foreground truncate hover:text-[#C1121F] transition-colors">
                             {item.menuItem.name}
                           </h4>
                         </button>
@@ -141,7 +138,7 @@ export function CartDrawer({ onItemClick }: CartDrawerProps) {
                             <Plus className="h-3 w-3" />
                           </button>
                         </div>
-                        <span className="text-sm font-bold text-brand-red">
+                        <span className="text-sm font-bold text-[#C1121F]">
                           Rs. {itemTotal.toLocaleString()}
                         </span>
                       </div>
@@ -153,7 +150,6 @@ export function CartDrawer({ onItemClick }: CartDrawerProps) {
           )}
         </div>
 
-        {/* Footer */}
         {items.length > 0 && (
           <div className="border-t border-border p-5">
             <div className="mb-4 space-y-2">
@@ -163,11 +159,13 @@ export function CartDrawer({ onItemClick }: CartDrawerProps) {
               </div>
               <div className="flex items-center justify-between text-sm">
                 <span className="text-muted-foreground">Delivery Fee</span>
-                <span className="font-medium text-foreground">Rs. {deliveryFee}</span>
+                <span className="font-medium text-foreground">
+                  {orderType === 'pickup' ? 'Free' : `Rs. ${deliveryFee}`}
+                </span>
               </div>
               <div className="flex items-center justify-between border-t border-border pt-2">
                 <span className="font-bold text-foreground">Total</span>
-                <span className="text-lg font-bold text-brand-red">Rs. {total.toLocaleString()}</span>
+                <span className="text-lg font-bold text-[#C1121F]">Rs. {total.toLocaleString()}</span>
               </div>
             </div>
             <button
@@ -175,7 +173,7 @@ export function CartDrawer({ onItemClick }: CartDrawerProps) {
                 setShowCheckout(true)
                 setIsCartOpen(false)
               }}
-              className="w-full rounded-xl bg-brand-red py-3.5 text-sm font-semibold text-primary-foreground transition-all hover:bg-brand-red/90"
+              className="w-full rounded-xl bg-[#C1121F] py-3.5 text-sm font-semibold text-white transition-all hover:bg-[#C1121F]/90 active:scale-[0.98]"
             >
               Proceed to Checkout
             </button>
@@ -183,7 +181,6 @@ export function CartDrawer({ onItemClick }: CartDrawerProps) {
         )}
       </div>
 
-      {/* Checkout Modal */}
       {showCheckout && (
         <CheckoutModal onClose={() => setShowCheckout(false)} />
       )}
