@@ -25,14 +25,15 @@ export function Footer() {
         <div className="grid gap-10 md:grid-cols-2 lg:grid-cols-4">
           {/* Brand */}
           <div>
-            <Image
-              src="/images/logo.png"
-              alt="Fatty Patty"
-              width={70}
-              height={70}
-              className="mb-4 h-16 w-16 rounded-full"
-              style={{ width: 'auto', height: 'auto' }}
-            />
+            <div className="relative mb-4 h-16 w-16 flex-shrink-0 overflow-hidden rounded-full">
+              <Image
+                src="/images/logo.png"
+                alt="Fatty Patty"
+                width={120}
+                height={120}
+                className="absolute inset-[-15%] h-[130%] w-[130%] object-cover"
+              />
+            </div>
             <p className="mb-4 text-sm leading-relaxed text-neutral-400">
               Premium smashed burgers, loaded fries and signature bowls. Serving Karachi&apos;s finest since 2020.
             </p>

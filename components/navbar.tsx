@@ -39,14 +39,16 @@ export function Navbar() {
       <div className="mx-auto flex max-w-7xl items-center justify-between px-4 lg:px-8">
         {/* Logo */}
         <Link href="#home" className="flex items-center gap-3 flex-shrink-0">
-          <Image
-            src="/images/logo.png"
-            alt="Fatty Patty"
-            width={60}
-            height={60}
-            className={`rounded-full transition-all duration-300 ${isScrolled ? 'h-10 w-10' : 'h-12 w-12'}`}
-            style={{ width: 'auto', height: 'auto' }}
-          />
+          <div className={`relative flex-shrink-0 overflow-hidden rounded-full transition-all duration-300 ${isScrolled ? 'h-10 w-10' : 'h-12 w-12'}`}>
+            <Image
+              src="/images/logo.png"
+              alt="Fatty Patty"
+              width={120}
+              height={120}
+              className="absolute inset-[-15%] h-[130%] w-[130%] object-cover"
+              priority
+            />
+          </div>
           <span className={`hidden font-serif font-bold text-primary-foreground transition-all duration-300 sm:block ${isScrolled ? 'text-lg' : 'text-xl'}`}>
             Fatty Patty
           </span>
