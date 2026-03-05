@@ -12,7 +12,12 @@ import type { MenuItem } from '@/lib/menu-data'
 
 export default function MenuPage() {
   const [selectedItem, setSelectedItem] = useState<MenuItem | null>(null)
-  const { hasCompletedSetup } = useOrder()
+  const { hasCompletedSetup, isHydrated } = useOrder()
+
+  // Show nothing until hydrated to prevent welcome screen flash
+  if (!isHydrated) {
+    return null
+  }
 
   if (!hasCompletedSetup) {
     return <WelcomeScreen />

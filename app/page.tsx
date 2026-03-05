@@ -20,14 +20,14 @@ import type { MenuItem, Deal } from '@/lib/menu-data'
 export default function HomePage() {
   const [selectedItem, setSelectedItem] = useState<MenuItem | null>(null)
   const [selectedDeal, setSelectedDeal] = useState<Deal | null>(null)
-  const { hasCompletedSetup } = useOrder()
+  const { hasCompletedSetup, isHydrated } = useOrder()
   const searchParams = useSearchParams()
   const router = useRouter()
 
   // Handle scrollTo query param (when navigating from another page)
   useEffect(() => {
     const scrollTo = searchParams.get('scrollTo')
-    if (scrollTo && hasCompletedSetup) {
+    if (scrollTo && hasCompletedSetup && isHydrated) {
       // Small delay to let the page render
       const timer = setTimeout(() => {
         const el = document.getElementById(scrollTo)
@@ -44,7 +44,12 @@ export default function HomePage() {
       }, 300)
       return () => clearTimeout(timer)
     }
-  }, [searchParams, hasCompletedSetup, router])
+  }, [searchParams, hasCompletedSetup, isHydrated, router])
+
+  // Show nothing until hydrated to prevent welcome screen flash
+  if (!isHydrated) {
+    return null
+  }
 
   if (!hasCompletedSetup) {
     return <WelcomeScreen />
