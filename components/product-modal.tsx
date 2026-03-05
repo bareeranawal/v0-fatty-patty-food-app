@@ -3,8 +3,8 @@
 import { useState, useEffect } from 'react'
 import Image from 'next/image'
 import { X, Plus, Minus, ShoppingBag, Check, Star } from 'lucide-react'
-import type { MenuItem } from '@/lib/menu-data'
-import { addOns } from '@/lib/menu-data'
+import type { MenuItem, AddOn } from '@/lib/menu-data'
+import { getAddOnsForCategory, drinkOptions } from '@/lib/menu-data'
 import { useCart } from '@/lib/cart-context'
 import { toast } from 'sonner'
 
@@ -13,18 +13,20 @@ interface ProductModalProps {
   onClose: () => void
 }
 
-const sizes = [
-  { id: 'small', label: 'Small', priceModifier: 0 },
-  { id: 'medium', label: 'Medium', priceModifier: 150 },
-  { id: 'large', label: 'Large', priceModifier: 300 },
-]
-
 export function ProductModal({ item, onClose }: ProductModalProps) {
   const [quantity, setQuantity] = useState(1)
-  const [selectedSize, setSelectedSize] = useState('small')
-  const [selectedAddOns, setSelectedAddOns] = useState<typeof addOns>([])
+  const [selectedAddOns, setSelectedAddOns] = useState<AddOn[]>([])
+  const [selectedDrink, setSelectedDrink] = useState<string>('')
+  const [userRating, setUserRating] = useState(0)
+  const [hoverRating, setHoverRating] = useState(0)
+  const [hasRated, setHasRated] = useState(false)
+  const [averageRating, setAverageRating] = useState(item.rating)
+  const [ratingCount, setRatingCount] = useState(Math.floor(Math.random() * 50) + 20)
   const [specialInstructions, setSpecialInstructions] = useState('')
   const { addItem } = useCart()
+
+  const availableAddOns = getAddOnsForCategory(item.category)
+  const showDrinkSelector = selectedAddOns.some((a) => a.id === 'add-cold-drink')
 
   // Lock body scroll when modal is open
   useEffect(() => {
@@ -43,29 +45,51 @@ export function ProductModal({ item, onClose }: ProductModalProps) {
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [onClose])
 
-  const toggleAddOn = (addOn: (typeof addOns)[0]) => {
+  const toggleAddOn = (addOn: AddOn) => {
     setSelectedAddOns((prev) => {
       const exists = prev.find((a) => a.id === addOn.id)
-      if (exists) return prev.filter((a) => a.id !== addOn.id)
+      if (exists) {
+        // If removing cold drink, also clear drink selection
+        if (addOn.id === 'add-cold-drink') {
+          setSelectedDrink('')
+        }
+        return prev.filter((a) => a.id !== addOn.id)
+      }
+      // For single/double patty, they are mutually exclusive
+      if (addOn.id === 'single-patty') {
+        return [...prev.filter((a) => a.id !== 'double-patty'), addOn]
+      }
+      if (addOn.id === 'double-patty') {
+        return [...prev.filter((a) => a.id !== 'single-patty'), addOn]
+      }
       return [...prev, addOn]
     })
   }
 
-  const sizeModifier = sizes.find((s) => s.id === selectedSize)?.priceModifier || 0
+  const handleSubmitRating = () => {
+    if (userRating === 0) return
+    const newCount = ratingCount + 1
+    const newAvg = ((averageRating * ratingCount) + userRating) / newCount
+    setAverageRating(Math.round(newAvg * 10) / 10)
+    setRatingCount(newCount)
+    setHasRated(true)
+    toast.success('Thank you for your rating!')
+  }
+
   const addOnTotal = selectedAddOns.reduce((sum, a) => sum + a.price, 0)
-  const itemTotal = (item.price + sizeModifier + addOnTotal) * quantity
+  const itemTotal = (item.price + addOnTotal) * quantity
 
   const handleAddToCart = () => {
-    const sizeAddOn = selectedSize !== 'small'
-      ? [{ id: `size-${selectedSize}`, name: `Size: ${sizes.find(s => s.id === selectedSize)?.label}`, price: sizeModifier }]
+    const drinkAddon = selectedDrink
+      ? [{ id: `drink-${selectedDrink}`, name: `Drink: ${drinkOptions.find(d => d.id === selectedDrink)?.name}`, price: 0 }]
       : []
 
     addItem({
       menuItem: item,
       quantity,
       addOns: [
-        ...sizeAddOn,
         ...selectedAddOns.map((a) => ({ id: a.id, name: a.name, price: a.price })),
+        ...drinkAddon,
       ],
       specialInstructions: specialInstructions || undefined,
     })
@@ -108,7 +132,8 @@ export function ProductModal({ item, onClose }: ProductModalProps) {
             {/* Rating badge on image */}
             <div className="absolute left-4 bottom-4 flex items-center gap-1.5 rounded-full bg-brand-dark/70 px-3 py-1.5 backdrop-blur-sm">
               <Star className="h-4 w-4 fill-brand-gold text-brand-gold" />
-              <span className="text-sm font-semibold text-primary-foreground">{item.rating}</span>
+              <span className="text-sm font-semibold text-primary-foreground">{averageRating}</span>
+              <span className="text-xs text-primary-foreground/60">({ratingCount})</span>
             </div>
           </div>
 
@@ -120,73 +145,117 @@ export function ProductModal({ item, onClose }: ProductModalProps) {
                 Rs. {item.price.toLocaleString()}
               </span>
             </div>
-            <p className="mb-6 text-sm leading-relaxed text-muted-foreground">{item.description}</p>
+            <p className="mb-5 text-sm leading-relaxed text-muted-foreground">{item.description}</p>
 
-            {/* Size Options */}
-            <div className="mb-5">
-              <h3 className="mb-3 text-sm font-bold uppercase tracking-wider text-foreground">
-                Choose Size
+            {/* Star Rating System */}
+            <div className="mb-5 rounded-xl border border-border bg-background p-4">
+              <h3 className="mb-2 text-sm font-bold uppercase tracking-wider text-foreground">
+                Rate this item
               </h3>
-              <div className="grid grid-cols-3 gap-2">
-                {sizes.map((size) => (
-                  <button
-                    key={size.id}
-                    onClick={() => setSelectedSize(size.id)}
-                    className={`flex flex-col items-center rounded-xl border px-3 py-3 transition-all ${
-                      selectedSize === size.id
-                        ? 'border-brand-red bg-brand-red/5 ring-1 ring-brand-red'
-                        : 'border-border bg-background hover:bg-muted'
-                    }`}
-                  >
-                    <span className={`text-sm font-semibold ${selectedSize === size.id ? 'text-brand-red' : 'text-foreground'}`}>
-                      {size.label}
-                    </span>
-                    <span className="text-xs text-muted-foreground">
-                      {size.priceModifier === 0 ? 'Base' : `+Rs. ${size.priceModifier}`}
-                    </span>
-                  </button>
-                ))}
-              </div>
+              {hasRated ? (
+                <p className="text-sm text-brand-red font-medium">Thanks for your rating!</p>
+              ) : (
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-0.5">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <button
+                        key={star}
+                        onClick={() => setUserRating(star)}
+                        onMouseEnter={() => setHoverRating(star)}
+                        onMouseLeave={() => setHoverRating(0)}
+                        className="p-0.5 transition-transform hover:scale-110"
+                        aria-label={`Rate ${star} star${star > 1 ? 's' : ''}`}
+                      >
+                        <Star
+                          className={`h-6 w-6 transition-colors ${
+                            star <= (hoverRating || userRating)
+                              ? 'fill-brand-gold text-brand-gold'
+                              : 'fill-muted text-muted'
+                          }`}
+                        />
+                      </button>
+                    ))}
+                  </div>
+                  {userRating > 0 && (
+                    <button
+                      onClick={handleSubmitRating}
+                      className="rounded-full bg-brand-red px-3 py-1 text-xs font-semibold text-primary-foreground transition-colors hover:bg-brand-red/90"
+                    >
+                      Submit
+                    </button>
+                  )}
+                </div>
+              )}
             </div>
 
-            {/* Add-ons */}
-            <div className="mb-5">
-              <h3 className="mb-3 text-sm font-bold uppercase tracking-wider text-foreground">
-                Extras & Add-ons
-              </h3>
-              <div className="space-y-2">
-                {addOns.map((addOn) => {
-                  const isSelected = selectedAddOns.some((a) => a.id === addOn.id)
-                  return (
+            {/* Add-ons / Customizations */}
+            {availableAddOns.length > 0 && (
+              <div className="mb-5">
+                <h3 className="mb-3 text-sm font-bold uppercase tracking-wider text-foreground">
+                  {item.category === 'beef-burgers' || item.category === 'chicken-burgers'
+                    ? 'Customize Your Burger'
+                    : 'Add-ons'}
+                </h3>
+                <div className="space-y-2">
+                  {availableAddOns.map((addOn) => {
+                    const isSelected = selectedAddOns.some((a) => a.id === addOn.id)
+                    return (
+                      <button
+                        key={addOn.id}
+                        onClick={() => toggleAddOn(addOn)}
+                        className={`flex w-full items-center justify-between rounded-xl border px-4 py-3 text-left transition-all ${
+                          isSelected
+                            ? 'border-brand-red bg-brand-red/5'
+                            : 'border-border bg-background hover:bg-muted'
+                        }`}
+                      >
+                        <div className="flex items-center gap-3">
+                          <div
+                            className={`flex h-5 w-5 items-center justify-center rounded-md border transition-colors ${
+                              isSelected
+                                ? 'border-brand-red bg-brand-red'
+                                : 'border-border'
+                            }`}
+                          >
+                            {isSelected && <Check className="h-3 w-3 text-primary-foreground" />}
+                          </div>
+                          <span className="text-sm font-medium text-foreground">{addOn.name}</span>
+                        </div>
+                        <span className="text-sm font-semibold text-brand-red">
+                          {addOn.price === 0 ? 'Included' : `+Rs. ${addOn.price}`}
+                        </span>
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* Drink Selector */}
+            {showDrinkSelector && (
+              <div className="mb-5">
+                <h3 className="mb-3 text-sm font-bold uppercase tracking-wider text-foreground">
+                  Choose Your Drink
+                </h3>
+                <div className="grid grid-cols-3 gap-2">
+                  {drinkOptions.map((drink) => (
                     <button
-                      key={addOn.id}
-                      onClick={() => toggleAddOn(addOn)}
-                      className={`flex w-full items-center justify-between rounded-xl border px-4 py-3 text-left transition-all ${
-                        isSelected
-                          ? 'border-brand-red bg-brand-red/5'
+                      key={drink.id}
+                      onClick={() => setSelectedDrink(drink.id)}
+                      className={`flex flex-col items-center rounded-xl border px-3 py-3 transition-all ${
+                        selectedDrink === drink.id
+                          ? 'border-brand-red bg-brand-red/5 ring-1 ring-brand-red'
                           : 'border-border bg-background hover:bg-muted'
                       }`}
                     >
-                      <div className="flex items-center gap-3">
-                        <div
-                          className={`flex h-5 w-5 items-center justify-center rounded-md border transition-colors ${
-                            isSelected
-                              ? 'border-brand-red bg-brand-red'
-                              : 'border-border'
-                          }`}
-                        >
-                          {isSelected && <Check className="h-3 w-3 text-primary-foreground" />}
-                        </div>
-                        <span className="text-sm font-medium text-foreground">{addOn.name}</span>
-                      </div>
-                      <span className="text-sm font-semibold text-brand-red">
-                        +Rs. {addOn.price}
+                      <span className={`text-sm font-semibold ${selectedDrink === drink.id ? 'text-brand-red' : 'text-foreground'}`}>
+                        {drink.name}
                       </span>
                     </button>
-                  )
-                })}
+                  ))}
+                </div>
               </div>
-            </div>
+            )}
 
             {/* Special Instructions */}
             <div className="mb-5">

@@ -7,6 +7,8 @@ export interface MenuItem {
   image: string
   popular?: boolean
   rating: number
+  isDeal?: boolean
+  dealItems?: string[]
 }
 
 export interface Category {
@@ -15,6 +17,38 @@ export interface Category {
   image: string
   count: number
 }
+
+export interface AddOn {
+  id: string
+  name: string
+  price: number
+}
+
+export interface DrinkOption {
+  id: string
+  name: string
+}
+
+export const drinkOptions: DrinkOption[] = [
+  { id: 'pepsi', name: 'Pepsi' },
+  { id: '7up', name: '7UP' },
+  { id: 'mirinda', name: 'Mirinda' },
+]
+
+// Burger-specific customization options
+export const burgerCustomizations: AddOn[] = [
+  { id: 'single-patty', name: 'Single Patty', price: 0 },
+  { id: 'double-patty', name: 'Double Patty', price: 350 },
+  { id: 'extra-cheese', name: 'Extra Cheese', price: 100 },
+  { id: 'extra-sauce', name: 'Extra Sauce', price: 50 },
+  { id: 'add-fries', name: 'Fries', price: 300 },
+  { id: 'add-cold-drink', name: 'Cold Drink', price: 150 },
+]
+
+// For bowls, tenders, starters: only cold drink add-on
+export const basicAddOns: AddOn[] = [
+  { id: 'add-cold-drink', name: 'Cold Drink', price: 150 },
+]
 
 export const categories: Category[] = [
   { id: 'beef-burgers', name: 'Beef Burgers', image: '/images/beef-burger.jpg', count: 7 },
@@ -63,16 +97,65 @@ export const menuItems: MenuItem[] = [
 
   // Drinks
   { id: 'd1', name: 'Mineral Water', description: 'Chilled mineral water bottle', price: 100, category: 'drinks', image: '/images/drinks.jpg', rating: 4.0 },
-  { id: 'd2', name: 'Soft Drink', description: 'Choice of Coca-Cola, Pepsi, Sprite, or Fanta', price: 150, category: 'drinks', image: '/images/drinks.jpg', rating: 4.2 },
+  { id: 'd2', name: 'Cold Drink', description: 'Choice of Pepsi, 7UP, or Mirinda', price: 150, category: 'drinks', image: '/images/drinks.jpg', rating: 4.2 },
 ]
 
-export const addOns = [
-  { id: 'extra-patty', name: 'Extra Patty', price: 350 },
-  { id: 'extra-cheese', name: 'Extra Cheese', price: 100 },
-  { id: 'extra-bacon', name: 'Extra Bacon', price: 350 },
-  { id: 'extra-chicken', name: 'Extra Chicken', price: 300 },
-  { id: 'extra-rice', name: 'Extra Rice', price: 100 },
-  { id: 'make-it-meal', name: 'Make It A Meal (Fries + Drink)', price: 300 },
+export interface Deal {
+  id: string
+  name: string
+  title: string
+  items: string[]
+  price: number
+  image: string
+}
+
+export const deals: Deal[] = [
+  {
+    id: 'deal-1',
+    name: 'Deal 1',
+    title: 'Classic Crunch Combo',
+    items: ['1 Crispy Chicken Burger', '1 Fries', '1 Cold Drink'],
+    price: 1200,
+    image: '/images/chicken-burger.jpg',
+  },
+  {
+    id: 'deal-2',
+    name: 'Deal 2',
+    title: 'Duo Box',
+    items: ['2 Crispy Chicken Burgers', '2 Fries', '2 Cold Drinks'],
+    price: 2000,
+    image: '/images/chicken-burger.jpg',
+  },
+  {
+    id: 'deal-3',
+    name: 'Deal 3',
+    title: 'Italian Fusion Deal',
+    items: ['1 Alfredo Pasta Bowl', '1 Stuffed Chicken Burger', '1 Fries', '1 Cold Drink'],
+    price: 1700,
+    image: '/images/pasta.jpg',
+  },
+  {
+    id: 'deal-4',
+    name: 'Deal 4',
+    title: 'Family Feast Box',
+    items: ['3 Crispy Chicken Burgers', '2 Fries', '3 Cold Drinks'],
+    price: 2800,
+    image: '/images/beef-burger.jpg',
+  },
 ]
+
+// Helper to determine which add-ons to show for a category
+export function getAddOnsForCategory(category: string): AddOn[] {
+  if (category === 'beef-burgers' || category === 'chicken-burgers') {
+    return burgerCustomizations
+  }
+  if (category === 'drinks') {
+    return []
+  }
+  return basicAddOns
+}
+
+// Legacy export for backward compatibility
+export const addOns = burgerCustomizations
 
 export const popularItems = menuItems.filter(item => item.popular)

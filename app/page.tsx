@@ -19,7 +19,7 @@ export default function HomePage() {
 
   return (
     <>
-      <Navbar />
+      <Navbar onItemClick={setSelectedItem} />
       <main>
         <Hero />
         <Categories />
@@ -30,7 +30,7 @@ export default function HomePage() {
         <Contact />
       </main>
       <Footer />
-      <CartDrawer />
+      <CartDrawer onItemClick={setSelectedItem} />
       {selectedItem && (
         <ProductModal
           item={selectedItem}

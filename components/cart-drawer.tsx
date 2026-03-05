@@ -4,15 +4,29 @@ import { useState } from 'react'
 import Image from 'next/image'
 import { X, Plus, Minus, Trash2, ShoppingBag } from 'lucide-react'
 import { useCart } from '@/lib/cart-context'
+import { menuItems } from '@/lib/menu-data'
+import type { MenuItem } from '@/lib/menu-data'
 import { cn } from '@/lib/utils'
 import { CheckoutModal } from './checkout-modal'
 
-export function CartDrawer() {
+interface CartDrawerProps {
+  onItemClick?: (item: MenuItem) => void
+}
+
+export function CartDrawer({ onItemClick }: CartDrawerProps) {
   const { items, removeItem, updateQuantity, isCartOpen, setIsCartOpen, subtotal, totalItems } = useCart()
   const [showCheckout, setShowCheckout] = useState(false)
 
   const deliveryFee = subtotal > 0 ? 150 : 0
   const total = subtotal + deliveryFee
+
+  const handleItemClick = (itemId: string) => {
+    const menuItem = menuItems.find((m) => m.id === itemId)
+    if (menuItem && onItemClick) {
+      setIsCartOpen(false)
+      onItemClick(menuItem)
+    }
+  }
 
   return (
     <>
@@ -69,19 +83,31 @@ export function CartDrawer() {
                 return (
                   <div
                     key={`${item.menuItem.id}-${index}`}
-                    className="flex gap-3 rounded-xl border border-border bg-background p-3"
+                    className="flex gap-3 rounded-xl border border-border bg-background p-3 transition-colors hover:border-brand-red/30"
                   >
-                    <div className="relative h-16 w-16 flex-shrink-0 overflow-hidden rounded-lg">
+                    {/* Clickable image */}
+                    <button
+                      onClick={() => handleItemClick(item.menuItem.id)}
+                      className="relative h-16 w-16 flex-shrink-0 overflow-hidden rounded-lg"
+                      aria-label={`View ${item.menuItem.name}`}
+                    >
                       <Image
                         src={item.menuItem.image}
                         alt={item.menuItem.name}
                         fill
                         className="object-cover"
                       />
-                    </div>
+                    </button>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-start justify-between gap-2">
-                        <h4 className="text-sm font-bold text-foreground truncate">{item.menuItem.name}</h4>
+                        <button
+                          onClick={() => handleItemClick(item.menuItem.id)}
+                          className="text-left"
+                        >
+                          <h4 className="text-sm font-bold text-foreground truncate hover:text-brand-red transition-colors">
+                            {item.menuItem.name}
+                          </h4>
+                        </button>
                         <button
                           onClick={() => removeItem(index)}
                           className="flex-shrink-0 text-muted-foreground transition-colors hover:text-destructive"

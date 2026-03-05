@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from 'react'
 import Image from 'next/image'
-import { Search, Star, Plus } from 'lucide-react'
+import { Star, Plus } from 'lucide-react'
 import { menuItems, categories } from '@/lib/menu-data'
 import type { MenuItem } from '@/lib/menu-data'
 import { useCart } from '@/lib/cart-context'
@@ -15,7 +15,6 @@ interface MenuSectionProps {
 
 export function MenuSection({ onItemClick }: MenuSectionProps) {
   const [activeCategory, setActiveCategory] = useState<string>('all')
-  const [searchQuery, setSearchQuery] = useState('')
   const { addItem } = useCart()
 
   const handleQuickAdd = (e: React.MouseEvent, item: MenuItem) => {
@@ -30,13 +29,9 @@ export function MenuSection({ onItemClick }: MenuSectionProps) {
 
   const filteredItems = useMemo(() => {
     return menuItems.filter((item) => {
-      const matchesCategory = activeCategory === 'all' || item.category === activeCategory
-      const matchesSearch =
-        item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        item.description.toLowerCase().includes(searchQuery.toLowerCase())
-      return matchesCategory && matchesSearch
+      return activeCategory === 'all' || item.category === activeCategory
     })
-  }, [activeCategory, searchQuery])
+  }, [activeCategory])
 
   const groupedItems = useMemo(() => {
     if (activeCategory !== 'all') {
@@ -64,22 +59,9 @@ export function MenuSection({ onItemClick }: MenuSectionProps) {
           </h2>
         </div>
 
-        {/* Sticky Filter Bar */}
-        <div className="sticky top-16 z-30 -mx-4 mb-10 border-b border-border bg-background/95 px-4 py-4 backdrop-blur-md lg:top-20">
-          {/* Search */}
-          <div className="relative mx-auto mb-4 max-w-md">
-            <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <input
-              type="text"
-              placeholder="Search the menu..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full rounded-full border border-border bg-card py-3 pl-11 pr-4 text-sm text-foreground placeholder:text-muted-foreground focus:border-brand-red focus:outline-none focus:ring-2 focus:ring-brand-red/20"
-            />
-          </div>
-
-          {/* Category Filter */}
-          <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+        {/* Sticky Category Filter Bar */}
+        <div className="sticky top-14 z-30 -mx-4 mb-10 border-b border-border bg-background/95 px-4 py-3 backdrop-blur-md">
+          <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
             <button
               onClick={() => setActiveCategory('all')}
               className={cn(
@@ -173,7 +155,7 @@ export function MenuSection({ onItemClick }: MenuSectionProps) {
 
         {filteredItems.length === 0 && (
           <div className="py-16 text-center">
-            <p className="text-lg text-muted-foreground">No items found. Try a different search.</p>
+            <p className="text-lg text-muted-foreground">No items found. Try a different category.</p>
           </div>
         )}
       </div>

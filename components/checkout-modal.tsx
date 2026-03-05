@@ -9,6 +9,35 @@ interface CheckoutModalProps {
   onClose: () => void
 }
 
+const deliveryAreas = [
+  'DHA Phase 8',
+  'DHA Phase 7',
+  'DHA Phase 6',
+  'DHA Phase 5',
+  'Creek Walk - DHA Phase 8',
+  'Khayaban-e-Ittehad',
+  'Bukhari Commercial',
+  'Tipu Sultan Road',
+  'Habit City - Tipu Sultan',
+  'Bahadurabad',
+  'Shaheed-e-Millat',
+  'PECHS',
+  'Tariq Road',
+  'Nursery',
+  'KDA Scheme 1',
+  'Gulshan-e-Iqbal Block 13/14',
+  'Clifton',
+  'Bath Island',
+  'Defence Phase 4',
+  'Defence Phase 3',
+  'Defence Phase 2',
+  'Zamzama',
+  'Khadda Market',
+  'Boat Basin',
+  'Sindhi Muslim Society',
+  'Smchs',
+]
+
 export function CheckoutModal({ onClose }: CheckoutModalProps) {
   const { items, subtotal, clearCart } = useCart()
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -19,8 +48,7 @@ export function CheckoutModal({ onClose }: CheckoutModalProps) {
     email: '',
     phone: '',
     address: '',
-    city: 'Karachi',
-    postalCode: '',
+    area: '',
     orderType: 'delivery',
     notes: '',
   })
@@ -30,6 +58,10 @@ export function CheckoutModal({ onClose }: CheckoutModalProps) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (formData.orderType === 'delivery' && !formData.area) {
+      toast.error('Please select a delivery area')
+      return
+    }
     setIsSubmitting(true)
 
     // Simulate order processing
@@ -165,30 +197,27 @@ export function CheckoutModal({ onClose }: CheckoutModalProps) {
                     Delivery Details
                   </h3>
                   <div className="space-y-3">
+                    <select
+                      required
+                      value={formData.area}
+                      onChange={(e) => updateField('area', e.target.value)}
+                      className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm text-foreground focus:border-brand-red focus:outline-none focus:ring-2 focus:ring-brand-red/20"
+                    >
+                      <option value="">Select Delivery Area</option>
+                      {deliveryAreas.map((area) => (
+                        <option key={area} value={area}>
+                          {area}
+                        </option>
+                      ))}
+                    </select>
                     <input
                       type="text"
                       required
-                      placeholder="Delivery Address"
+                      placeholder="Full Delivery Address"
                       value={formData.address}
                       onChange={(e) => updateField('address', e.target.value)}
                       className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-brand-red focus:outline-none focus:ring-2 focus:ring-brand-red/20"
                     />
-                    <div className="grid grid-cols-2 gap-3">
-                      <input
-                        type="text"
-                        placeholder="City"
-                        value={formData.city}
-                        onChange={(e) => updateField('city', e.target.value)}
-                        className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-brand-red focus:outline-none focus:ring-2 focus:ring-brand-red/20"
-                      />
-                      <input
-                        type="text"
-                        placeholder="Postal Code"
-                        value={formData.postalCode}
-                        onChange={(e) => updateField('postalCode', e.target.value)}
-                        className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-brand-red focus:outline-none focus:ring-2 focus:ring-brand-red/20"
-                      />
-                    </div>
                   </div>
                 </div>
               )}

@@ -1,25 +1,31 @@
 "use client"
 
-import { Flame, Utensils, Phone } from 'lucide-react'
-
-const offers = [
-  {
-    title: 'Make It A Meal',
-    description: 'Add fries and a drink to any burger for just Rs. 300. Upgrade your order and save!',
-    price: 'Just +300',
-    icon: Utensils,
-    accent: 'from-brand-red to-brand-red/80',
-  },
-  {
-    title: 'Weekend Burger Deals',
-    description: 'Every weekend, enjoy exclusive discounts on our premium wagyu and signature burgers.',
-    price: 'Up to 20% Off',
-    icon: Flame,
-    accent: 'from-brand-gold to-brand-gold/80',
-  },
-]
+import Image from 'next/image'
+import { Flame, Check } from 'lucide-react'
+import { deals } from '@/lib/menu-data'
+import { useCart } from '@/lib/cart-context'
+import { toast } from 'sonner'
 
 export function Promotions() {
+  const { addItem } = useCart()
+
+  const handleAddDeal = (deal: typeof deals[0]) => {
+    addItem({
+      menuItem: {
+        id: deal.id,
+        name: `${deal.name} - ${deal.title}`,
+        description: deal.items.join(', '),
+        price: deal.price,
+        category: 'deals',
+        image: deal.image,
+        rating: 4.8,
+      },
+      quantity: 1,
+      addOns: [],
+    })
+    toast.success(`${deal.title} added to cart!`)
+  }
+
   return (
     <section id="offers" className="bg-muted/50 py-20 lg:py-28">
       <div className="mx-auto max-w-7xl px-4 lg:px-8">
@@ -32,48 +38,54 @@ export function Promotions() {
           </h2>
         </div>
 
-        <div className="grid gap-6 md:grid-cols-2">
-          {offers.map((offer) => (
+        <div className="grid gap-6 sm:grid-cols-2">
+          {deals.map((deal) => (
             <div
-              key={offer.title}
-              className="group relative overflow-hidden rounded-2xl border border-border bg-card p-8 shadow-sm transition-all hover:-translate-y-1 hover:shadow-xl md:p-10"
+              key={deal.id}
+              className="group relative overflow-hidden rounded-2xl border border-border bg-card shadow-sm transition-all hover:-translate-y-1 hover:shadow-xl"
             >
-              <div className={`absolute -right-8 -top-8 h-32 w-32 rounded-full bg-gradient-to-br ${offer.accent} opacity-10 transition-transform group-hover:scale-150`} />
-              <div className="relative z-10">
-                <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-brand-red/10">
-                  <offer.icon className="h-6 w-6 text-brand-red" />
+              {/* Deal Image */}
+              <div className="relative h-44 w-full overflow-hidden">
+                <Image
+                  src={deal.image}
+                  alt={deal.title}
+                  fill
+                  className="object-cover transition-transform duration-500 group-hover:scale-110"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-brand-dark/70 via-brand-dark/20 to-transparent" />
+                <div className="absolute left-4 top-4 flex items-center gap-1.5 rounded-full bg-brand-gold px-3 py-1">
+                  <Flame className="h-3.5 w-3.5 text-brand-dark" />
+                  <span className="text-xs font-bold text-brand-dark">{deal.name}</span>
                 </div>
-                <h3 className="mb-2 text-xl font-bold text-foreground">{offer.title}</h3>
-                <p className="mb-6 text-sm leading-relaxed text-muted-foreground">
-                  {offer.description}
-                </p>
-                <span className="inline-block rounded-full bg-brand-red px-6 py-2.5 text-sm font-bold text-primary-foreground">
-                  {offer.price}
-                </span>
+                <div className="absolute bottom-4 left-4 right-4">
+                  <h3 className="text-xl font-bold text-primary-foreground">{deal.title}</h3>
+                </div>
+              </div>
+
+              {/* Deal Content */}
+              <div className="p-5">
+                <ul className="mb-4 space-y-1.5">
+                  {deal.items.map((item, i) => (
+                    <li key={i} className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <Check className="h-4 w-4 flex-shrink-0 text-brand-red" />
+                      {item}
+                    </li>
+                  ))}
+                </ul>
+                <div className="flex items-center justify-between">
+                  <span className="text-2xl font-bold text-brand-red">
+                    Rs. {deal.price.toLocaleString()}
+                  </span>
+                  <button
+                    onClick={() => handleAddDeal(deal)}
+                    className="rounded-full bg-brand-red px-5 py-2.5 text-sm font-semibold text-primary-foreground transition-all hover:bg-brand-red/90 hover:scale-105 active:scale-95"
+                  >
+                    Add to Cart
+                  </button>
+                </div>
               </div>
             </div>
           ))}
-        </div>
-
-        {/* WhatsApp Order CTA */}
-        <div className="mt-10 flex flex-col items-center justify-center gap-4 rounded-2xl border border-brand-gold/30 bg-brand-gold/10 p-8 text-center sm:flex-row sm:text-left">
-          <div className="flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-full bg-green-500">
-            <Phone className="h-6 w-6 text-primary-foreground" />
-          </div>
-          <div className="flex-1">
-            <h3 className="mb-1 text-lg font-bold text-foreground">Order via WhatsApp</h3>
-            <p className="text-sm text-muted-foreground">
-              Send us your order along with your pin location and get it delivered hot and fresh!
-            </p>
-          </div>
-          <a
-            href="https://wa.me/923342024000"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex-shrink-0 rounded-full bg-green-500 px-6 py-3 text-sm font-bold text-primary-foreground transition-all hover:bg-green-600 hover:scale-105"
-          >
-            0334 2024 000
-          </a>
         </div>
       </div>
     </section>
