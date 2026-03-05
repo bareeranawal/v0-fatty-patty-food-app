@@ -18,7 +18,7 @@ export function Contact() {
   }
 
   return (
-    <section id="contact" className="bg-muted/50 py-14 lg:py-20">
+    <section id="contact" className="bg-background py-10 lg:py-14">
       <div className="mx-auto max-w-7xl px-4 lg:px-8">
         <div className="mb-10 text-center">
           <span className="mb-3 inline-block text-sm font-semibold uppercase tracking-widest text-[#C1121F]">

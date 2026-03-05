@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, useMemo } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+import { usePathname } from 'next/navigation'
 import { Search, ShoppingBag, Menu, X, Info, Sun, Moon, MapPin, Store } from 'lucide-react'
 import { useTheme } from 'next-themes'
 import { useCart } from '@/lib/cart-context'
@@ -15,8 +15,7 @@ import { cn } from '@/lib/utils'
 const navLinks = [
   { name: 'Home', href: '/' },
   { name: 'Menu', href: '/menu' },
-  { name: 'About Us', href: '#about' },
-  { name: 'Contact', href: '#contact' },
+  { name: 'About', href: '#about' },
 ]
 
 interface NavbarProps {
@@ -35,7 +34,7 @@ export function Navbar({ onItemClick }: NavbarProps) {
   const [mounted, setMounted] = useState(false)
   const searchInputRef = useRef<HTMLInputElement>(null)
   const searchContainerRef = useRef<HTMLDivElement>(null)
-  const router = useRouter()
+  const pathname = usePathname()
 
   useEffect(() => { setMounted(true) }, [])
 
@@ -80,11 +79,7 @@ export function Navbar({ onItemClick }: NavbarProps) {
   const toggleTheme = () => {
     document.documentElement.classList.add('transitioning')
     setTheme(theme === 'dark' ? 'light' : 'dark')
-    setTimeout(() => document.documentElement.classList.remove('transitioning'), 350)
-  }
-
-  const handleToggleOrderType = (type: 'delivery' | 'pickup') => {
-    setOrderType(type)
+    setTimeout(() => document.documentElement.classList.remove('transitioning'), 400)
   }
 
   return (
@@ -98,57 +93,59 @@ export function Navbar({ onItemClick }: NavbarProps) {
         )}
       >
         <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-2 lg:px-8">
-          {/* Logo */}
-          <Link href="/" className="flex items-center gap-2.5 flex-shrink-0">
-            <div className="relative h-10 w-10 flex-shrink-0 overflow-hidden rounded-full border-2 border-[#F4A261]/40">
-              <Image
-                src="/images/logo.png"
-                alt="Fatty Patty"
-                width={80}
-                height={80}
-                className="h-full w-full object-cover"
-                priority
-              />
-            </div>
-            <span className="hidden font-serif text-lg font-bold text-white sm:block">
-              Fatty Patty
-            </span>
-          </Link>
+          {/* Left: Logo + Delivery/Pickup toggle */}
+          <div className="flex items-center gap-3 flex-shrink-0">
+            <Link href="/" className="flex items-center gap-2 flex-shrink-0">
+              <div className="relative h-10 w-10 flex-shrink-0 overflow-hidden rounded-full border-2 border-[#F4A261]/40">
+                <Image
+                  src="/images/logo.png"
+                  alt="Fatty Patty"
+                  width={80}
+                  height={80}
+                  className="h-full w-full object-cover"
+                  priority
+                />
+              </div>
+              <span className="hidden font-serif text-lg font-bold text-white sm:block">
+                Fatty Patty
+              </span>
+            </Link>
 
-          {/* Delivery / Pickup Toggle (Pill Style) */}
-          <div className="hidden items-center sm:flex">
-            <div className="flex rounded-full border border-white/20 bg-white/10 p-0.5">
-              <button
-                onClick={() => handleToggleOrderType('delivery')}
-                className={cn(
-                  'flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-semibold transition-all',
-                  orderType === 'delivery'
-                    ? 'bg-white text-[#C1121F] shadow-sm'
-                    : 'text-white/70 hover:text-white'
-                )}
-              >
-                <MapPin className="h-3 w-3" />
-                Delivery
-              </button>
-              <button
-                onClick={() => handleToggleOrderType('pickup')}
-                className={cn(
-                  'flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-semibold transition-all',
-                  orderType === 'pickup'
-                    ? 'bg-white text-[#C1121F] shadow-sm'
-                    : 'text-white/70 hover:text-white'
-                )}
-              >
-                <Store className="h-3 w-3" />
-                Pickup
-              </button>
+            {/* Delivery / Pickup Toggle (Pill Style) - close to logo */}
+            <div className="hidden items-center sm:flex">
+              <div className="flex rounded-full border border-white/20 bg-white/10 p-0.5">
+                <button
+                  onClick={() => setOrderType('delivery')}
+                  className={cn(
+                    'flex items-center gap-1 rounded-full px-3 py-1.5 text-xs font-semibold transition-all duration-200',
+                    orderType === 'delivery'
+                      ? 'bg-white text-[#C1121F] shadow-sm'
+                      : 'text-white/70 hover:text-white'
+                  )}
+                >
+                  <MapPin className="h-3 w-3" />
+                  Delivery
+                </button>
+                <button
+                  onClick={() => setOrderType('pickup')}
+                  className={cn(
+                    'flex items-center gap-1 rounded-full px-3 py-1.5 text-xs font-semibold transition-all duration-200',
+                    orderType === 'pickup'
+                      ? 'bg-white text-[#C1121F] shadow-sm'
+                      : 'text-white/70 hover:text-white'
+                  )}
+                >
+                  <Store className="h-3 w-3" />
+                  Pickup
+                </button>
+              </div>
             </div>
           </div>
 
-          {/* Desktop Nav */}
-          <div className="hidden items-center gap-5 lg:flex">
+          {/* Center: Home, Menu, About - perfectly centered */}
+          <div className="hidden items-center gap-6 lg:flex absolute left-1/2 -translate-x-1/2">
             {navLinks.map((link) =>
-              link.name === 'About Us' ? (
+              link.name === 'About' ? (
                 <button
                   key={link.name}
                   onClick={() => setShowAbout(true)}
@@ -160,7 +157,10 @@ export function Navbar({ onItemClick }: NavbarProps) {
                 <Link
                   key={link.name}
                   href={link.href}
-                  className="text-sm font-medium tracking-wide text-white/80 transition-colors hover:text-[#F4A261]"
+                  className={cn(
+                    'text-sm font-medium tracking-wide transition-colors hover:text-[#F4A261]',
+                    pathname === link.href ? 'text-white' : 'text-white/80'
+                  )}
                 >
                   {link.name}
                 </Link>
@@ -168,19 +168,8 @@ export function Navbar({ onItemClick }: NavbarProps) {
             )}
           </div>
 
-          {/* Right Actions */}
-          <div className="flex items-center gap-1.5">
-            {/* Theme Toggle */}
-            {mounted && (
-              <button
-                onClick={toggleTheme}
-                className="rounded-full p-2 text-white/80 transition-colors hover:bg-white/10 hover:text-white"
-                aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
-              >
-                {theme === 'dark' ? <Sun className="h-4.5 w-4.5" /> : <Moon className="h-4.5 w-4.5" />}
-              </button>
-            )}
-
+          {/* Right: Search, Cart, Theme Toggle */}
+          <div className="flex items-center gap-1">
             {/* Search */}
             <div ref={searchContainerRef} className="relative">
               {isSearchOpen ? (
@@ -259,6 +248,17 @@ export function Navbar({ onItemClick }: NavbarProps) {
               )}
             </button>
 
+            {/* Theme Toggle */}
+            {mounted && (
+              <button
+                onClick={toggleTheme}
+                className="rounded-full p-2 text-white/80 transition-colors hover:bg-white/10 hover:text-white"
+                aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
+              >
+                {theme === 'dark' ? <Sun className="h-4.5 w-4.5" /> : <Moon className="h-4.5 w-4.5" />}
+              </button>
+            )}
+
             {/* Mobile Menu Toggle */}
             <button
               className="rounded-full p-2 text-white/80 transition-colors hover:bg-white/10 lg:hidden"
@@ -281,7 +281,7 @@ export function Navbar({ onItemClick }: NavbarProps) {
             {/* Mobile Delivery/Pickup Toggle */}
             <div className="mb-2 flex rounded-full border border-white/20 bg-white/10 p-0.5">
               <button
-                onClick={() => handleToggleOrderType('delivery')}
+                onClick={() => setOrderType('delivery')}
                 className={cn(
                   'flex flex-1 items-center justify-center gap-1.5 rounded-full px-3 py-2 text-xs font-semibold transition-all',
                   orderType === 'delivery' ? 'bg-white text-[#C1121F]' : 'text-white/70'
@@ -291,7 +291,7 @@ export function Navbar({ onItemClick }: NavbarProps) {
                 Delivery
               </button>
               <button
-                onClick={() => handleToggleOrderType('pickup')}
+                onClick={() => setOrderType('pickup')}
                 className={cn(
                   'flex flex-1 items-center justify-center gap-1.5 rounded-full px-3 py-2 text-xs font-semibold transition-all',
                   orderType === 'pickup' ? 'bg-white text-[#C1121F]' : 'text-white/70'
@@ -303,7 +303,7 @@ export function Navbar({ onItemClick }: NavbarProps) {
             </div>
 
             {navLinks.map((link) =>
-              link.name === 'About Us' ? (
+              link.name === 'About' ? (
                 <button
                   key={link.name}
                   onClick={() => { setShowAbout(true); setIsMobileMenuOpen(false) }}
@@ -347,7 +347,7 @@ export function Navbar({ onItemClick }: NavbarProps) {
               <X className="h-4 w-4" />
             </button>
             <div className="bg-[#C1121F] px-8 pb-6 pt-8 text-center">
-              <div className="mx-auto mb-4 h-20 w-20 overflow-hidden rounded-full border-3 border-[#F4A261]/40">
+              <div className="mx-auto mb-4 h-20 w-20 overflow-hidden rounded-full border-2 border-[#F4A261]/40">
                 <Image
                   src="/images/logo.png"
                   alt="Fatty Patty"

@@ -6,12 +6,14 @@ import { MenuSection } from '@/components/menu-section'
 import { Footer } from '@/components/footer'
 import { CartDrawer } from '@/components/cart-drawer'
 import { ProductModal } from '@/components/product-modal'
+import { DealModal } from '@/components/deal-modal'
 import { WelcomeScreen } from '@/components/welcome-screen'
 import { useOrder } from '@/lib/order-context'
-import type { MenuItem } from '@/lib/menu-data'
+import type { MenuItem, Deal } from '@/lib/menu-data'
 
 export default function MenuPage() {
   const [selectedItem, setSelectedItem] = useState<MenuItem | null>(null)
+  const [selectedDeal, setSelectedDeal] = useState<Deal | null>(null)
   const { hasCompletedSetup } = useOrder()
 
   if (!hasCompletedSetup) {
@@ -22,7 +24,7 @@ export default function MenuPage() {
     <>
       <Navbar onItemClick={setSelectedItem} />
       <main className="pt-14">
-        <MenuSection onItemClick={setSelectedItem} />
+        <MenuSection onItemClick={setSelectedItem} onDealClick={setSelectedDeal} />
       </main>
       <Footer />
       <CartDrawer onItemClick={setSelectedItem} />
@@ -30,6 +32,12 @@ export default function MenuPage() {
         <ProductModal
           item={selectedItem}
           onClose={() => setSelectedItem(null)}
+        />
+      )}
+      {selectedDeal && (
+        <DealModal
+          deal={selectedDeal}
+          onClose={() => setSelectedDeal(null)}
         />
       )}
     </>

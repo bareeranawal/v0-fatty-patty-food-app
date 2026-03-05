@@ -28,15 +28,11 @@ export function ProductModal({ item, onClose }: ProductModalProps) {
   const availableAddOns = getAddOnsForCategory(item.category)
   const showDrinkSelector = selectedAddOns.some((a) => a.id === 'add-cold-drink')
 
-  // Lock body scroll when modal is open
   useEffect(() => {
     document.body.style.overflow = 'hidden'
-    return () => {
-      document.body.style.overflow = ''
-    }
+    return () => { document.body.style.overflow = '' }
   }, [])
 
-  // Close on Escape key
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose()
@@ -49,13 +45,9 @@ export function ProductModal({ item, onClose }: ProductModalProps) {
     setSelectedAddOns((prev) => {
       const exists = prev.find((a) => a.id === addOn.id)
       if (exists) {
-        // If removing cold drink, also clear drink selection
-        if (addOn.id === 'add-cold-drink') {
-          setSelectedDrink('')
-        }
+        if (addOn.id === 'add-cold-drink') setSelectedDrink('')
         return prev.filter((a) => a.id !== addOn.id)
       }
-      // For single/double patty, they are mutually exclusive
       if (addOn.id === 'single-patty') {
         return [...prev.filter((a) => a.id !== 'double-patty'), addOn]
       }
@@ -80,6 +72,11 @@ export function ProductModal({ item, onClose }: ProductModalProps) {
   const itemTotal = (item.price + addOnTotal) * quantity
 
   const handleAddToCart = () => {
+    if (showDrinkSelector && !selectedDrink) {
+      toast.error('Please select a drink before adding to cart')
+      return
+    }
+
     const drinkAddon = selectedDrink
       ? [{ id: `drink-${selectedDrink}`, name: `Drink: ${drinkOptions.find(d => d.id === selectedDrink)?.name}`, price: 0 }]
       : []
@@ -99,49 +96,40 @@ export function ProductModal({ item, onClose }: ProductModalProps) {
 
   return (
     <div
-      className="fixed inset-0 z-[60] flex items-center justify-center bg-brand-dark/60 p-4 backdrop-blur-sm"
+      className="fixed inset-0 z-[60] flex items-center justify-center bg-[#1a1a1a]/60 p-4 backdrop-blur-sm"
       onClick={onClose}
     >
       <div
-        className="relative flex w-full max-w-lg flex-col overflow-hidden rounded-2xl bg-card shadow-2xl max-h-[90vh]"
+        className="relative flex w-full max-w-lg flex-col overflow-hidden rounded-2xl bg-card shadow-2xl max-h-[90vh] animate-fade-in-up"
         role="dialog"
         aria-modal="true"
         aria-label={`${item.name} details`}
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Close button */}
         <button
           onClick={onClose}
-          className="absolute right-3 top-3 z-10 flex h-9 w-9 items-center justify-center rounded-full bg-brand-dark/50 text-primary-foreground backdrop-blur-sm transition-colors hover:bg-brand-dark/70"
+          className="absolute right-3 top-3 z-10 flex h-9 w-9 items-center justify-center rounded-full bg-[#1a1a1a]/50 text-white backdrop-blur-sm transition-colors hover:bg-[#1a1a1a]/70"
           aria-label="Close"
         >
           <X className="h-4 w-4" />
         </button>
 
-        {/* Scrollable content */}
         <div className="overflow-y-auto">
           {/* Image */}
           <div className="relative h-56 w-full flex-shrink-0">
-            <Image
-              src={item.image}
-              alt={item.name}
-              fill
-              className="object-cover"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-brand-dark/40 to-transparent" />
-            {/* Rating badge on image */}
-            <div className="absolute left-4 bottom-4 flex items-center gap-1.5 rounded-full bg-brand-dark/70 px-3 py-1.5 backdrop-blur-sm">
-              <Star className="h-4 w-4 fill-brand-gold text-brand-gold" />
-              <span className="text-sm font-semibold text-primary-foreground">{averageRating}</span>
-              <span className="text-xs text-primary-foreground/60">({ratingCount})</span>
+            <Image src={item.image} alt={item.name} fill className="object-cover" />
+            <div className="absolute inset-0 bg-gradient-to-t from-[#1a1a1a]/40 to-transparent" />
+            <div className="absolute left-4 bottom-4 flex items-center gap-1.5 rounded-full bg-[#1a1a1a]/70 px-3 py-1.5 backdrop-blur-sm">
+              <Star className="h-4 w-4 fill-[#F4A261] text-[#F4A261]" />
+              <span className="text-sm font-semibold text-white">{averageRating}</span>
+              <span className="text-xs text-white/60">({ratingCount})</span>
             </div>
           </div>
 
-          {/* Content */}
           <div className="p-6">
             <div className="mb-1 flex items-start justify-between gap-4">
               <h2 className="text-xl font-bold text-foreground">{item.name}</h2>
-              <span className="flex-shrink-0 text-xl font-bold text-brand-red">
+              <span className="flex-shrink-0 text-xl font-bold text-[#C1121F]">
                 Rs. {item.price.toLocaleString()}
               </span>
             </div>
@@ -153,7 +141,7 @@ export function ProductModal({ item, onClose }: ProductModalProps) {
                 Rate this item
               </h3>
               {hasRated ? (
-                <p className="text-sm text-brand-red font-medium">Thanks for your rating!</p>
+                <p className="text-sm text-[#C1121F] font-medium">Thanks for your rating!</p>
               ) : (
                 <div className="flex items-center gap-3">
                   <div className="flex items-center gap-0.5">
@@ -163,13 +151,13 @@ export function ProductModal({ item, onClose }: ProductModalProps) {
                         onClick={() => setUserRating(star)}
                         onMouseEnter={() => setHoverRating(star)}
                         onMouseLeave={() => setHoverRating(0)}
-                        className="p-0.5 transition-transform hover:scale-110"
+                        className="p-0.5 transition-transform duration-150 hover:scale-110"
                         aria-label={`Rate ${star} star${star > 1 ? 's' : ''}`}
                       >
                         <Star
                           className={`h-6 w-6 transition-colors ${
                             star <= (hoverRating || userRating)
-                              ? 'fill-brand-gold text-brand-gold'
+                              ? 'fill-[#F4A261] text-[#F4A261]'
                               : 'fill-muted text-muted'
                           }`}
                         />
@@ -179,7 +167,7 @@ export function ProductModal({ item, onClose }: ProductModalProps) {
                   {userRating > 0 && (
                     <button
                       onClick={handleSubmitRating}
-                      className="rounded-full bg-brand-red px-3 py-1 text-xs font-semibold text-primary-foreground transition-colors hover:bg-brand-red/90"
+                      className="rounded-full bg-[#C1121F] px-3 py-1 text-xs font-semibold text-white transition-all duration-200 hover:bg-[#C1121F]/90"
                     >
                       Submit
                     </button>
@@ -203,9 +191,9 @@ export function ProductModal({ item, onClose }: ProductModalProps) {
                       <button
                         key={addOn.id}
                         onClick={() => toggleAddOn(addOn)}
-                        className={`flex w-full items-center justify-between rounded-xl border px-4 py-3 text-left transition-all ${
+                        className={`flex w-full items-center justify-between rounded-xl border px-4 py-3 text-left transition-all duration-200 ${
                           isSelected
-                            ? 'border-brand-red bg-brand-red/5'
+                            ? 'border-[#C1121F] bg-[#C1121F]/5'
                             : 'border-border bg-background hover:bg-muted'
                         }`}
                       >
@@ -213,15 +201,15 @@ export function ProductModal({ item, onClose }: ProductModalProps) {
                           <div
                             className={`flex h-5 w-5 items-center justify-center rounded-md border transition-colors ${
                               isSelected
-                                ? 'border-brand-red bg-brand-red'
+                                ? 'border-[#C1121F] bg-[#C1121F]'
                                 : 'border-border'
                             }`}
                           >
-                            {isSelected && <Check className="h-3 w-3 text-primary-foreground" />}
+                            {isSelected && <Check className="h-3 w-3 text-white" />}
                           </div>
                           <span className="text-sm font-medium text-foreground">{addOn.name}</span>
                         </div>
-                        <span className="text-sm font-semibold text-brand-red">
+                        <span className="text-sm font-semibold text-[#C1121F]">
                           {addOn.price === 0 ? 'Included' : `+Rs. ${addOn.price}`}
                         </span>
                       </button>
@@ -235,25 +223,28 @@ export function ProductModal({ item, onClose }: ProductModalProps) {
             {showDrinkSelector && (
               <div className="mb-5">
                 <h3 className="mb-3 text-sm font-bold uppercase tracking-wider text-foreground">
-                  Choose Your Drink
+                  Choose Your Drink <span className="text-[#C1121F]">*</span>
                 </h3>
                 <div className="grid grid-cols-3 gap-2">
                   {drinkOptions.map((drink) => (
                     <button
                       key={drink.id}
                       onClick={() => setSelectedDrink(drink.id)}
-                      className={`flex flex-col items-center rounded-xl border px-3 py-3 transition-all ${
+                      className={`flex flex-col items-center rounded-xl border px-3 py-3 transition-all duration-200 ${
                         selectedDrink === drink.id
-                          ? 'border-brand-red bg-brand-red/5 ring-1 ring-brand-red'
+                          ? 'border-[#C1121F] bg-[#C1121F]/5 ring-1 ring-[#C1121F]'
                           : 'border-border bg-background hover:bg-muted'
                       }`}
                     >
-                      <span className={`text-sm font-semibold ${selectedDrink === drink.id ? 'text-brand-red' : 'text-foreground'}`}>
+                      <span className={`text-sm font-semibold ${selectedDrink === drink.id ? 'text-[#C1121F]' : 'text-foreground'}`}>
                         {drink.name}
                       </span>
                     </button>
                   ))}
                 </div>
+                {!selectedDrink && (
+                  <p className="mt-2 text-xs text-[#C1121F]">Please select a drink to continue</p>
+                )}
               </div>
             )}
 
@@ -267,12 +258,12 @@ export function ProductModal({ item, onClose }: ProductModalProps) {
                 placeholder="Any special requests? (e.g., no onions, extra sauce)"
                 value={specialInstructions}
                 onChange={(e) => setSpecialInstructions(e.target.value)}
-                className="w-full resize-none rounded-xl border border-border bg-background px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-brand-red focus:outline-none focus:ring-2 focus:ring-brand-red/20"
+                className="w-full resize-none rounded-xl border border-border bg-background px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-[#C1121F] focus:outline-none focus:ring-2 focus:ring-[#C1121F]/20"
               />
             </div>
 
             {/* Quantity */}
-            <div className="mb-5 flex items-center justify-between">
+            <div className="flex items-center justify-between">
               <span className="text-sm font-bold text-foreground">Quantity</span>
               <div className="flex items-center gap-3">
                 <button
@@ -299,7 +290,7 @@ export function ProductModal({ item, onClose }: ProductModalProps) {
         <div className="flex-shrink-0 border-t border-border bg-card p-4">
           <button
             onClick={handleAddToCart}
-            className="flex w-full items-center justify-center gap-2 rounded-xl bg-brand-red py-3.5 text-sm font-semibold text-primary-foreground transition-all hover:bg-brand-red/90 active:scale-[0.98]"
+            className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#C1121F] py-3.5 text-sm font-semibold text-white transition-all duration-200 hover:bg-[#C1121F]/90 active:scale-[0.98]"
           >
             <ShoppingBag className="h-4 w-4" />
             Add to Cart - Rs. {itemTotal.toLocaleString()}

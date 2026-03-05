@@ -18,7 +18,6 @@ export function DealModal({ deal, onClose }: DealModalProps) {
   const [specialInstructions, setSpecialInstructions] = useState('')
   const { addItem } = useCart()
 
-  // Count how many cold drinks are in the deal
   const drinkCount = deal.items.filter(item => item.toLowerCase().includes('cold drink')).length || 1
   const [selectedDrinks, setSelectedDrinks] = useState<string[]>(Array(drinkCount).fill(''))
 
@@ -83,7 +82,7 @@ export function DealModal({ deal, onClose }: DealModalProps) {
       onClick={onClose}
     >
       <div
-        className="relative flex w-full max-w-lg flex-col overflow-hidden rounded-2xl bg-card shadow-2xl max-h-[90vh]"
+        className="relative flex w-full max-w-lg flex-col overflow-hidden rounded-2xl bg-card shadow-2xl max-h-[90vh] animate-fade-in-up"
         role="dialog"
         aria-modal="true"
         aria-label={`${deal.title} deal details`}
@@ -108,6 +107,7 @@ export function DealModal({ deal, onClose }: DealModalProps) {
             </div>
             <div className="absolute bottom-4 left-4 right-4">
               <h2 className="text-2xl font-bold text-white">{deal.title}</h2>
+              <p className="mt-1 text-lg font-bold text-[#F4A261]">Rs. {deal.price.toLocaleString()}</p>
             </div>
           </div>
 
@@ -142,7 +142,7 @@ export function DealModal({ deal, onClose }: DealModalProps) {
                       <button
                         key={drink.id}
                         onClick={() => handleSelectDrink(drinkIndex, drink.id)}
-                        className={`flex flex-col items-center rounded-xl border px-3 py-3 transition-all ${
+                        className={`flex flex-col items-center rounded-xl border px-3 py-3 transition-all duration-200 ${
                           selectedDrinks[drinkIndex] === drink.id
                             ? 'border-[#C1121F] bg-[#C1121F]/5 ring-1 ring-[#C1121F]'
                             : 'border-border bg-background hover:bg-muted'
@@ -204,7 +204,7 @@ export function DealModal({ deal, onClose }: DealModalProps) {
           <button
             onClick={handleAddToCart}
             disabled={!allDrinksSelected}
-            className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#C1121F] py-3.5 text-sm font-semibold text-white transition-all hover:bg-[#C1121F]/90 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#C1121F] py-3.5 text-sm font-semibold text-white transition-all duration-200 hover:bg-[#C1121F]/90 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <ShoppingBag className="h-4 w-4" />
             Add to Cart - Rs. {totalPrice.toLocaleString()}

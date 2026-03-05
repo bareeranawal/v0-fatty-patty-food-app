@@ -68,10 +68,10 @@ export function Reviews() {
   }
 
   return (
-    <section id="reviews" className="bg-background py-14 lg:py-20">
+    <section id="reviews" className="bg-muted/50 py-10 lg:py-14">
       <div className="mx-auto max-w-7xl px-4 lg:px-8">
-        <div className="mb-10 text-center">
-          <span className="mb-3 inline-block text-sm font-semibold uppercase tracking-widest text-[#C1121F]">
+        <div className="mb-8 text-center">
+          <span className="mb-2 inline-block text-sm font-semibold uppercase tracking-widest text-[#C1121F]">
             Testimonials
           </span>
           <h2 className="font-serif text-3xl font-bold text-foreground md:text-4xl lg:text-5xl text-balance">
@@ -111,10 +111,10 @@ export function Reviews() {
             ))}
           </div>
 
-          <div className="mt-6 flex items-center justify-center gap-4">
+          <div className="mt-5 flex items-center justify-center gap-4">
             <button
               onClick={prev}
-              className="flex h-10 w-10 items-center justify-center rounded-full border border-border bg-card text-foreground transition-colors hover:bg-[#C1121F] hover:text-white hover:border-[#C1121F]"
+              className="flex h-10 w-10 items-center justify-center rounded-full border border-border bg-card text-foreground transition-all duration-200 hover:bg-[#C1121F] hover:text-white hover:border-[#C1121F]"
               aria-label="Previous reviews"
             >
               <ChevronLeft className="h-4 w-4" />
@@ -124,7 +124,7 @@ export function Reviews() {
                 <button
                   key={i}
                   onClick={() => setCurrent(i)}
-                  className={`h-2 rounded-full transition-all ${
+                  className={`h-2 rounded-full transition-all duration-200 ${
                     i === current ? 'w-6 bg-[#C1121F]' : 'w-2 bg-border hover:bg-muted-foreground'
                   }`}
                   aria-label={`Go to review ${i + 1}`}
@@ -133,7 +133,7 @@ export function Reviews() {
             </div>
             <button
               onClick={next}
-              className="flex h-10 w-10 items-center justify-center rounded-full border border-border bg-card text-foreground transition-colors hover:bg-[#C1121F] hover:text-white hover:border-[#C1121F]"
+              className="flex h-10 w-10 items-center justify-center rounded-full border border-border bg-card text-foreground transition-all duration-200 hover:bg-[#C1121F] hover:text-white hover:border-[#C1121F]"
               aria-label="Next reviews"
             >
               <ChevronRight className="h-4 w-4" />

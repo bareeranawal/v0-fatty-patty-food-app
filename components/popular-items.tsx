@@ -1,5 +1,6 @@
 "use client"
 
+import { useEffect, useRef } from 'react'
 import Image from 'next/image'
 import { Star, Plus } from 'lucide-react'
 import { popularItems } from '@/lib/menu-data'
@@ -13,6 +14,24 @@ interface PopularItemsProps {
 
 export function PopularItems({ onItemClick }: PopularItemsProps) {
   const { addItem } = useCart()
+  const sectionRef = useRef<HTMLElement>(null)
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('animate-fade-in-up')
+            observer.unobserve(entry.target)
+          }
+        })
+      },
+      { threshold: 0.1 }
+    )
+    const cards = sectionRef.current?.querySelectorAll('.reveal-card')
+    cards?.forEach((card) => observer.observe(card))
+    return () => observer.disconnect()
+  }, [])
 
   const handleQuickAdd = (e: React.MouseEvent, item: MenuItem) => {
     e.stopPropagation()
@@ -21,10 +40,10 @@ export function PopularItems({ onItemClick }: PopularItemsProps) {
   }
 
   return (
-    <section className="bg-muted/50 py-14 lg:py-20">
+    <section ref={sectionRef} className="bg-muted/50 py-10 lg:py-14">
       <div className="mx-auto max-w-7xl px-4 lg:px-8">
-        <div className="mb-10 text-center">
-          <span className="mb-3 inline-block text-sm font-semibold uppercase tracking-widest text-[#C1121F]">
+        <div className="mb-8 text-center">
+          <span className="mb-2 inline-block text-sm font-semibold uppercase tracking-widest text-[#C1121F]">
             Fan Favorites
           </span>
           <h2 className="font-serif text-3xl font-bold text-foreground md:text-4xl lg:text-5xl text-balance">
@@ -33,13 +52,14 @@ export function PopularItems({ onItemClick }: PopularItemsProps) {
         </div>
 
         <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-          {popularItems.map((item) => (
+          {popularItems.map((item, i) => (
             <div
               key={item.id}
               onClick={() => onItemClick(item)}
-              className="group relative cursor-pointer overflow-hidden rounded-2xl border border-border bg-card shadow-sm transition-all duration-300 hover:-translate-y-1.5 hover:shadow-xl hover:border-[#C1121F]/20"
+              className="reveal-card group relative cursor-pointer overflow-hidden rounded-2xl border border-border bg-card shadow-sm transition-all duration-300 hover:-translate-y-1.5 hover:shadow-xl hover:border-[#C1121F]/20 opacity-0"
+              style={{ animationDelay: `${i * 0.08}s` }}
             >
-              <div className="relative h-52 w-full overflow-hidden">
+              <div className="relative h-48 w-full overflow-hidden">
                 <Image
                   src={item.image}
                   alt={item.name}
@@ -58,7 +78,7 @@ export function PopularItems({ onItemClick }: PopularItemsProps) {
 
               <div className="p-5">
                 <h3 className="mb-1 text-lg font-bold text-foreground">{item.name}</h3>
-                <p className="mb-4 text-sm leading-relaxed text-muted-foreground line-clamp-2">
+                <p className="mb-3 text-sm leading-relaxed text-muted-foreground line-clamp-2">
                   {item.description}
                 </p>
                 <div className="flex items-center justify-between">
@@ -67,7 +87,7 @@ export function PopularItems({ onItemClick }: PopularItemsProps) {
                   </span>
                   <button
                     onClick={(e) => handleQuickAdd(e, item)}
-                    className="flex items-center gap-1.5 rounded-full bg-[#C1121F] px-4 py-2 text-xs font-semibold text-white transition-all hover:bg-[#C1121F]/90 hover:scale-105 active:scale-95"
+                    className="flex items-center gap-1.5 rounded-full bg-[#C1121F] px-4 py-2 text-xs font-semibold text-white transition-all duration-200 hover:bg-[#C1121F]/90 hover:scale-105 active:scale-95"
                     aria-label={`Add ${item.name} to cart`}
                   >
                     <Plus className="h-3.5 w-3.5" />

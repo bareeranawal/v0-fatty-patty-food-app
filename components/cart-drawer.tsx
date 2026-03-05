@@ -23,6 +23,7 @@ export function CartDrawer({ onItemClick }: CartDrawerProps) {
   const total = subtotal + deliveryFee
 
   const handleItemClick = (itemId: string) => {
+    // Try to find the item in menu data - skip for deals
     const menuItem = menuItems.find((m) => m.id === itemId)
     if (menuItem && onItemClick) {
       setIsCartOpen(false)
@@ -77,6 +78,7 @@ export function CartDrawer({ onItemClick }: CartDrawerProps) {
               {items.map((item, index) => {
                 const addOnTotal = item.addOns.reduce((sum, addon) => sum + addon.price, 0)
                 const itemTotal = (item.menuItem.price + addOnTotal) * item.quantity
+                const isMenuItemClickable = menuItems.some(m => m.id === item.menuItem.id)
 
                 return (
                   <div
@@ -85,7 +87,10 @@ export function CartDrawer({ onItemClick }: CartDrawerProps) {
                   >
                     <button
                       onClick={() => handleItemClick(item.menuItem.id)}
-                      className="relative h-16 w-16 flex-shrink-0 overflow-hidden rounded-lg"
+                      className={cn(
+                        "relative h-16 w-16 flex-shrink-0 overflow-hidden rounded-lg",
+                        isMenuItemClickable ? "cursor-pointer" : "cursor-default"
+                      )}
                       aria-label={`View ${item.menuItem.name}`}
                     >
                       <Image
@@ -99,9 +104,15 @@ export function CartDrawer({ onItemClick }: CartDrawerProps) {
                       <div className="flex items-start justify-between gap-2">
                         <button
                           onClick={() => handleItemClick(item.menuItem.id)}
-                          className="text-left"
+                          className={cn(
+                            "text-left",
+                            isMenuItemClickable ? "cursor-pointer" : "cursor-default"
+                          )}
                         >
-                          <h4 className="text-sm font-bold text-foreground truncate hover:text-[#C1121F] transition-colors">
+                          <h4 className={cn(
+                            "text-sm font-bold text-foreground truncate transition-colors",
+                            isMenuItemClickable && "hover:text-[#C1121F]"
+                          )}>
                             {item.menuItem.name}
                           </h4>
                         </button>
@@ -173,7 +184,7 @@ export function CartDrawer({ onItemClick }: CartDrawerProps) {
                 setShowCheckout(true)
                 setIsCartOpen(false)
               }}
-              className="w-full rounded-xl bg-[#C1121F] py-3.5 text-sm font-semibold text-white transition-all hover:bg-[#C1121F]/90 active:scale-[0.98]"
+              className="w-full rounded-xl bg-[#C1121F] py-3.5 text-sm font-semibold text-white transition-all duration-200 hover:bg-[#C1121F]/90 active:scale-[0.98]"
             >
               Proceed to Checkout
             </button>

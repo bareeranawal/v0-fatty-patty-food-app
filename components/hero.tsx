@@ -32,7 +32,7 @@ export function Hero() {
           </p>
           <Link
             href="/menu"
-            className="inline-flex items-center justify-center rounded-full bg-[#C1121F] px-10 py-4 text-sm font-semibold tracking-wide text-white shadow-lg transition-all hover:scale-105 hover:bg-[#C1121F]/90 hover:shadow-xl active:scale-95 animate-fade-in-up-delay-3"
+            className="inline-flex items-center justify-center rounded-full bg-[#C1121F] px-10 py-4 text-sm font-semibold tracking-wide text-white shadow-lg transition-all duration-300 hover:scale-105 hover:bg-[#C1121F]/90 hover:shadow-xl active:scale-95 animate-fade-in-up-delay-3"
           >
             Order Now
           </Link>

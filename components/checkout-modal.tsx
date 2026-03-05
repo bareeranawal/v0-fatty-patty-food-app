@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from 'react'
-import { X, CheckCircle2 } from 'lucide-react'
+import { X, CheckCircle2, Package, Clock, MapPin, Store } from 'lucide-react'
 import { useCart } from '@/lib/cart-context'
 import { useOrder, deliveryAreas, branches } from '@/lib/order-context'
 import { toast } from 'sonner'
@@ -16,6 +16,14 @@ export function CheckoutModal({ onClose }: CheckoutModalProps) {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [orderPlaced, setOrderPlaced] = useState(false)
   const [orderId, setOrderId] = useState('')
+  const [orderDetails, setOrderDetails] = useState<{
+    name: string
+    email: string
+    items: { name: string; quantity: number; price: number }[]
+    total: number
+    orderType: string
+    estimatedTime: string
+  } | null>(null)
   const [formData, setFormData] = useState({
     fullName: '',
     email: '',
@@ -40,12 +48,10 @@ export function CheckoutModal({ onClose }: CheckoutModalProps) {
     setIsSubmitting(true)
 
     try {
-      // Simulate order processing
       await new Promise((resolve) => setTimeout(resolve, 1500))
 
       const newOrderId = `FP-${Date.now().toString(36).toUpperCase()}`
 
-      // Send confirmation email
       const emailItems = items.map((item) => {
         const addOnTotal = item.addOns.reduce((sum, a) => sum + a.price, 0)
         return {
@@ -72,8 +78,15 @@ export function CheckoutModal({ onClose }: CheckoutModalProps) {
       })
 
       setOrderId(newOrderId)
+      setOrderDetails({
+        name: formData.fullName,
+        email: formData.email,
+        items: emailItems,
+        total,
+        orderType: formData.orderType,
+        estimatedTime,
+      })
       setOrderPlaced(true)
-      // Clear cart ONLY after successful order
       clearCart()
       toast.success('Order placed successfully!')
     } catch {
@@ -87,29 +100,64 @@ export function CheckoutModal({ onClose }: CheckoutModalProps) {
     setFormData((prev) => ({ ...prev, [field]: value }))
   }
 
-  if (orderPlaced) {
+  if (orderPlaced && orderDetails) {
     return (
       <div className="fixed inset-0 z-[60] flex items-center justify-center bg-[#1a1a1a]/50 backdrop-blur-sm p-4">
-        <div className="w-full max-w-md rounded-2xl bg-card p-8 text-center shadow-2xl animate-fade-in-up">
-          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-green-100">
-            <CheckCircle2 className="h-8 w-8 text-green-600" />
+        <div className="w-full max-w-md rounded-2xl bg-card p-8 shadow-2xl animate-fade-in-up">
+          <div className="text-center">
+            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-green-100 dark:bg-green-900/30">
+              <CheckCircle2 className="h-8 w-8 text-green-600 dark:text-green-400" />
+            </div>
+            <h2 className="mb-1 text-2xl font-bold text-foreground">Order Placed!</h2>
+            <p className="mb-4 text-sm text-muted-foreground">
+              A confirmation email has been sent to {orderDetails.email}
+            </p>
           </div>
-          <h2 className="mb-2 text-2xl font-bold text-foreground">Order Placed!</h2>
-          <p className="mb-1 text-sm text-muted-foreground">
-            Your order has been placed successfully.
-          </p>
-          <p className="mb-2 text-sm font-medium text-foreground">
-            Order ID: <span className="text-[#C1121F]">{orderId}</span>
-          </p>
-          <p className="mb-1 text-xs text-muted-foreground">
-            Estimated Time: <span className="font-medium text-foreground">{estimatedTime}</span>
-          </p>
-          <p className="mb-6 text-xs text-muted-foreground">
-            A confirmation email has been sent to your email with the order details.
-          </p>
+
+          <div className="mb-5 rounded-xl border border-border bg-background p-4 space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Package className="h-4 w-4 text-[#C1121F]" />
+                <span className="text-sm font-semibold text-foreground">Order ID</span>
+              </div>
+              <span className="text-sm font-bold text-[#C1121F]">{orderId}</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                {orderDetails.orderType === 'delivery' ? (
+                  <MapPin className="h-4 w-4 text-[#C1121F]" />
+                ) : (
+                  <Store className="h-4 w-4 text-[#C1121F]" />
+                )}
+                <span className="text-sm font-semibold text-foreground">Type</span>
+              </div>
+              <span className="text-sm text-foreground capitalize">{orderDetails.orderType}</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Clock className="h-4 w-4 text-[#C1121F]" />
+                <span className="text-sm font-semibold text-foreground">Est. Time</span>
+              </div>
+              <span className="text-sm text-foreground">{orderDetails.estimatedTime}</span>
+            </div>
+            <div className="border-t border-border pt-3">
+              <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Items</p>
+              {orderDetails.items.map((item, i) => (
+                <div key={i} className="flex items-center justify-between text-sm">
+                  <span className="text-muted-foreground">{item.quantity}x {item.name}</span>
+                  <span className="font-medium text-foreground">Rs. {item.price.toLocaleString()}</span>
+                </div>
+              ))}
+            </div>
+            <div className="flex items-center justify-between border-t border-border pt-3">
+              <span className="font-bold text-foreground">Total</span>
+              <span className="text-lg font-bold text-[#C1121F]">Rs. {orderDetails.total.toLocaleString()}</span>
+            </div>
+          </div>
+
           <button
             onClick={onClose}
-            className="w-full rounded-xl bg-[#C1121F] py-3 text-sm font-semibold text-white transition-all hover:bg-[#C1121F]/90"
+            className="w-full rounded-xl bg-[#C1121F] py-3 text-sm font-semibold text-white transition-all duration-200 hover:bg-[#C1121F]/90 active:scale-[0.98]"
           >
             Done
           </button>
@@ -173,7 +221,7 @@ export function CheckoutModal({ onClose }: CheckoutModalProps) {
                   <button
                     type="button"
                     onClick={() => updateField('orderType', 'delivery')}
-                    className={`flex-1 rounded-xl border py-3 text-sm font-medium transition-all ${
+                    className={`flex-1 rounded-xl border py-3 text-sm font-medium transition-all duration-200 ${
                       formData.orderType === 'delivery'
                         ? 'border-[#C1121F] bg-[#C1121F]/10 text-[#C1121F]'
                         : 'border-border bg-background text-foreground hover:bg-muted'
@@ -184,7 +232,7 @@ export function CheckoutModal({ onClose }: CheckoutModalProps) {
                   <button
                     type="button"
                     onClick={() => updateField('orderType', 'pickup')}
-                    className={`flex-1 rounded-xl border py-3 text-sm font-medium transition-all ${
+                    className={`flex-1 rounded-xl border py-3 text-sm font-medium transition-all duration-200 ${
                       formData.orderType === 'pickup'
                         ? 'border-[#C1121F] bg-[#C1121F]/10 text-[#C1121F]'
                         : 'border-border bg-background text-foreground hover:bg-muted'
@@ -233,7 +281,7 @@ export function CheckoutModal({ onClose }: CheckoutModalProps) {
                         key={branch.id}
                         type="button"
                         onClick={() => updateField('branch', branch.id)}
-                        className={`flex w-full items-start gap-3 rounded-xl border p-4 text-left transition-all ${
+                        className={`flex w-full items-start gap-3 rounded-xl border p-4 text-left transition-all duration-200 ${
                           formData.branch === branch.id
                             ? 'border-[#C1121F] bg-[#C1121F]/5'
                             : 'border-border bg-background hover:bg-muted'
@@ -304,7 +352,7 @@ export function CheckoutModal({ onClose }: CheckoutModalProps) {
           <button
             type="submit"
             disabled={isSubmitting}
-            className="mt-6 w-full rounded-xl bg-[#C1121F] py-3.5 text-sm font-semibold text-white transition-all hover:bg-[#C1121F]/90 disabled:opacity-50 active:scale-[0.98]"
+            className="mt-6 w-full rounded-xl bg-[#C1121F] py-3.5 text-sm font-semibold text-white transition-all duration-200 hover:bg-[#C1121F]/90 disabled:opacity-50 active:scale-[0.98]"
           >
             {isSubmitting ? 'Placing Order...' : `Place Order - Rs. ${total.toLocaleString()}`}
           </button>
