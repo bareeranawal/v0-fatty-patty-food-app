@@ -70,16 +70,13 @@ export function CartProvider({ children }: { children: ReactNode }) {
   }, [items, isCartHydrated])
 
   const addItem = useCallback((item: CartItem) => {
-    console.log("[v0] CartContext addItem called with:", item.menuItem.name, "qty:", item.quantity, "addOns:", item.addOns.length)
     setItems(prev => {
-      console.log("[v0] Previous cart items count:", prev.length)
       const existingIndex = prev.findIndex(
         existing =>
           existing.menuItem.id === item.menuItem.id &&
           JSON.stringify(existing.addOns) === JSON.stringify(item.addOns)
       )
       if (existingIndex >= 0) {
-        console.log("[v0] Found existing item at index:", existingIndex, "- incrementing quantity")
         const updated = [...prev]
         updated[existingIndex] = {
           ...updated[existingIndex],
@@ -87,7 +84,6 @@ export function CartProvider({ children }: { children: ReactNode }) {
         }
         return updated
       }
-      console.log("[v0] Adding new item to cart, new total:", prev.length + 1)
       return [...prev, item]
     })
     setIsCartOpen(true)
