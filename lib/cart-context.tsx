@@ -1,0 +1,100 @@
+"use client"
+
+import { createContext, useContext, useState, useCallback, type ReactNode } from 'react'
+import type { MenuItem } from './menu-data'
+
+export interface CartItem {
+  menuItem: MenuItem
+  quantity: number
+  addOns: { id: string; name: string; price: number }[]
+  specialInstructions?: string
+}
+
+interface CartContextType {
+  items: CartItem[]
+  addItem: (item: CartItem) => void
+  removeItem: (index: number) => void
+  updateQuantity: (index: number, quantity: number) => void
+  clearCart: () => void
+  totalItems: number
+  subtotal: number
+  isCartOpen: boolean
+  setIsCartOpen: (open: boolean) => void
+}
+
+const CartContext = createContext<CartContextType | undefined>(undefined)
+
+export function CartProvider({ children }: { children: ReactNode }) {
+  const [items, setItems] = useState<CartItem[]>([])
+  const [isCartOpen, setIsCartOpen] = useState(false)
+
+  const addItem = useCallback((item: CartItem) => {
+    setItems(prev => {
+      const existingIndex = prev.findIndex(
+        existing =>
+          existing.menuItem.id === item.menuItem.id &&
+          JSON.stringify(existing.addOns) === JSON.stringify(item.addOns)
+      )
+      if (existingIndex >= 0) {
+        const updated = [...prev]
+        updated[existingIndex] = {
+          ...updated[existingIndex],
+          quantity: updated[existingIndex].quantity + item.quantity,
+        }
+        return updated
+      }
+      return [...prev, item]
+    })
+    setIsCartOpen(true)
+  }, [])
+
+  const removeItem = useCallback((index: number) => {
+    setItems(prev => prev.filter((_, i) => i !== index))
+  }, [])
+
+  const updateQuantity = useCallback((index: number, quantity: number) => {
+    if (quantity <= 0) {
+      setItems(prev => prev.filter((_, i) => i !== index))
+      return
+    }
+    setItems(prev => {
+      const updated = [...prev]
+      updated[index] = { ...updated[index], quantity }
+      return updated
+    })
+  }, [])
+
+  const clearCart = useCallback(() => setItems([]), [])
+
+  const totalItems = items.reduce((sum, item) => sum + item.quantity, 0)
+  const subtotal = items.reduce((sum, item) => {
+    const addOnTotal = item.addOns.reduce((a, addon) => a + addon.price, 0)
+    return sum + (item.menuItem.price + addOnTotal) * item.quantity
+  }, 0)
+
+  return (
+    <CartContext.Provider
+      value={{
+        items,
+        addItem,
+        removeItem,
+        updateQuantity,
+        clearCart,
+        totalItems,
+        subtotal,
+        isCartOpen,
+        setIsCartOpen,
+      }}
+    >
+      {children}
+    </CartContext.Provider>
+  )
+}
+
+export function useCart() {
+  const context = useContext(CartContext)
+  if (context === undefined) {
+    throw new Error('useCart must be used within a CartProvider')
+  }
+  return context
+}
