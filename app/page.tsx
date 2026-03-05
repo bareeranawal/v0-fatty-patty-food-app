@@ -1,7 +1,7 @@
 "use client"
 
-import { useState, useEffect } from 'react'
-import { useSearchParams, useRouter } from 'next/navigation'
+import { useState, useEffect, useRef } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { Navbar } from '@/components/navbar'
 import { Hero } from '@/components/hero'
 import { Categories } from '@/components/categories'
@@ -22,13 +22,14 @@ export default function HomePage() {
   const [selectedDeal, setSelectedDeal] = useState<Deal | null>(null)
   const { hasCompletedSetup, isHydrated } = useOrder()
   const searchParams = useSearchParams()
-  const router = useRouter()
+  const hasScrolled = useRef(false)
 
   // Handle scrollTo query param (when navigating from another page)
   useEffect(() => {
     const scrollTo = searchParams.get('scrollTo')
-    if (scrollTo && hasCompletedSetup && isHydrated) {
-      // Small delay to let the page render
+    if (scrollTo && hasCompletedSetup && isHydrated && !hasScrolled.current) {
+      hasScrolled.current = true
+      // Small delay to let the page render fully
       const timer = setTimeout(() => {
         const el = document.getElementById(scrollTo)
         if (el) {
@@ -39,12 +40,12 @@ export default function HomePage() {
             behavior: 'smooth',
           })
         }
-        // Clean up the URL without reloading
-        router.replace('/', { scroll: false })
+        // Clean up URL using native history API — does NOT trigger Next.js router re-render
+        window.history.replaceState(window.history.state, '', '/')
       }, 300)
       return () => clearTimeout(timer)
     }
-  }, [searchParams, hasCompletedSetup, isHydrated, router])
+  }, [searchParams, hasCompletedSetup, isHydrated])
 
   // Show nothing until hydrated to prevent welcome screen flash
   if (!isHydrated) {

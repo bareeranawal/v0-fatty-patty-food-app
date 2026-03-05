@@ -1,6 +1,6 @@
 "use client"
 
-import { createContext, useContext, useState, useCallback, type ReactNode } from 'react'
+import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react'
 import type { MenuItem } from './menu-data'
 
 export interface CartItem {
@@ -20,13 +20,54 @@ interface CartContextType {
   subtotal: number
   isCartOpen: boolean
   setIsCartOpen: (open: boolean) => void
+  isCartHydrated: boolean
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined)
 
+const CART_STORAGE_KEY = 'fatty-patty-cart'
+
+function loadCartFromStorage(): CartItem[] {
+  if (typeof window === 'undefined') return []
+  try {
+    const raw = sessionStorage.getItem(CART_STORAGE_KEY)
+    if (!raw) return []
+    const parsed = JSON.parse(raw)
+    if (Array.isArray(parsed)) return parsed
+    return []
+  } catch {
+    return []
+  }
+}
+
+function saveCartToStorage(items: CartItem[]) {
+  if (typeof window === 'undefined') return
+  try {
+    sessionStorage.setItem(CART_STORAGE_KEY, JSON.stringify(items))
+  } catch {
+    // ignore storage errors
+  }
+}
+
 export function CartProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([])
   const [isCartOpen, setIsCartOpen] = useState(false)
+  const [isCartHydrated, setIsCartHydrated] = useState(false)
+
+  // On mount, restore cart from sessionStorage
+  useEffect(() => {
+    const persisted = loadCartFromStorage()
+    if (persisted.length > 0) {
+      setItems(persisted)
+    }
+    setIsCartHydrated(true)
+  }, [])
+
+  // Persist cart changes to sessionStorage
+  useEffect(() => {
+    if (!isCartHydrated) return
+    saveCartToStorage(items)
+  }, [items, isCartHydrated])
 
   const addItem = useCallback((item: CartItem) => {
     setItems(prev => {
@@ -64,7 +105,13 @@ export function CartProvider({ children }: { children: ReactNode }) {
     })
   }, [])
 
-  const clearCart = useCallback(() => setItems([]), [])
+  const clearCart = useCallback(() => {
+    setItems([])
+    // Also clear from storage on explicit clear (e.g. after order)
+    if (typeof window !== 'undefined') {
+      try { sessionStorage.removeItem(CART_STORAGE_KEY) } catch { /* ignore */ }
+    }
+  }, [])
 
   const totalItems = items.reduce((sum, item) => sum + item.quantity, 0)
   const subtotal = items.reduce((sum, item) => {
@@ -84,6 +131,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
         subtotal,
         isCartOpen,
         setIsCartOpen,
+        isCartHydrated,
       }}
     >
       {children}
