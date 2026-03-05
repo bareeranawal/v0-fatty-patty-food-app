@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import Image from 'next/image'
+import { useRouter } from 'next/navigation'
 import { MapPin, Store, ChevronRight } from 'lucide-react'
 import { useOrder, deliveryAreas, branches } from '@/lib/order-context'
 import type { Branch } from '@/lib/order-context'
@@ -13,6 +14,7 @@ export function WelcomeScreen() {
   const [localOrderType, setLocalOrderType] = useState<'delivery' | 'pickup' | null>(null)
   const [localArea, setLocalArea] = useState('')
   const [localBranch, setLocalBranch] = useState<Branch | null>(null)
+  const router = useRouter()
 
   const handleSelectType = (type: 'delivery' | 'pickup') => {
     setLocalOrderType(type)
@@ -28,10 +30,12 @@ export function WelcomeScreen() {
       setOrderType('delivery')
       setSelectedArea(localArea)
       setHasCompletedSetup(true)
+      router.push('/')
     } else if (localOrderType === 'pickup' && localBranch) {
       setOrderType('pickup')
       setSelectedBranch(localBranch)
       setHasCompletedSetup(true)
+      router.push('/')
     }
   }
 
@@ -62,7 +66,7 @@ export function WelcomeScreen() {
         {/* Step: Choose Order Type */}
         {step === 'type' && (
           <div className="animate-fade-in-up">
-            <h2 className="mb-6 text-center text-lg font-semibold text-white">Choose Order Type</h2>
+            <h2 className="mb-6 text-center text-lg font-semibold text-white">How would you like to receive your order?</h2>
             <div className="grid grid-cols-2 gap-4">
               <button
                 onClick={() => handleSelectType('delivery')}

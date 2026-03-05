@@ -1,21 +1,28 @@
 "use client"
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { Navbar } from '@/components/navbar'
 import { MenuSection } from '@/components/menu-section'
 import { Footer } from '@/components/footer'
 import { CartDrawer } from '@/components/cart-drawer'
 import { ProductModal } from '@/components/product-modal'
-import { WelcomeScreen } from '@/components/welcome-screen'
 import { useOrder } from '@/lib/order-context'
 import type { MenuItem } from '@/lib/menu-data'
 
 export default function MenuPage() {
   const [selectedItem, setSelectedItem] = useState<MenuItem | null>(null)
   const { hasCompletedSetup } = useOrder()
+  const router = useRouter()
+
+  useEffect(() => {
+    if (!hasCompletedSetup) {
+      router.replace('/')
+    }
+  }, [hasCompletedSetup, router])
 
   if (!hasCompletedSetup) {
-    return <WelcomeScreen />
+    return null
   }
 
   return (

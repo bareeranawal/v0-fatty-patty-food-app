@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, useMemo } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+import { usePathname } from 'next/navigation'
 import { Search, ShoppingBag, Menu, X, Info, Sun, Moon, MapPin, Store } from 'lucide-react'
 import { useTheme } from 'next-themes'
 import { useCart } from '@/lib/cart-context'
@@ -16,7 +16,6 @@ const navLinks = [
   { name: 'Home', href: '/' },
   { name: 'Menu', href: '/menu' },
   { name: 'About Us', href: '#about' },
-  { name: 'Contact', href: '#contact' },
 ]
 
 interface NavbarProps {
@@ -35,7 +34,7 @@ export function Navbar({ onItemClick }: NavbarProps) {
   const [mounted, setMounted] = useState(false)
   const searchInputRef = useRef<HTMLInputElement>(null)
   const searchContainerRef = useRef<HTMLDivElement>(null)
-  const router = useRouter()
+  const pathname = usePathname()
 
   useEffect(() => { setMounted(true) }, [])
 
@@ -87,6 +86,11 @@ export function Navbar({ onItemClick }: NavbarProps) {
     setOrderType(type)
   }
 
+  const isActive = (href: string) => {
+    if (href === '/') return pathname === '/'
+    return pathname.startsWith(href)
+  }
+
   return (
     <>
       <nav
@@ -97,176 +101,186 @@ export function Navbar({ onItemClick }: NavbarProps) {
             : 'bg-[#C1121F]'
         )}
       >
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-2 lg:px-8">
-          {/* Logo */}
-          <Link href="/" className="flex items-center gap-2.5 flex-shrink-0">
-            <div className="relative h-10 w-10 flex-shrink-0 overflow-hidden rounded-full border-2 border-[#F4A261]/40">
-              <Image
-                src="/images/logo.png"
-                alt="Fatty Patty"
-                width={80}
-                height={80}
-                className="h-full w-full object-cover"
-                priority
-              />
-            </div>
-            <span className="hidden font-serif text-lg font-bold text-white sm:block">
-              Fatty Patty
-            </span>
-          </Link>
-
-          {/* Delivery / Pickup Toggle (Pill Style) */}
-          <div className="hidden items-center sm:flex">
-            <div className="flex rounded-full border border-white/20 bg-white/10 p-0.5">
-              <button
-                onClick={() => handleToggleOrderType('delivery')}
-                className={cn(
-                  'flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-semibold transition-all',
-                  orderType === 'delivery'
-                    ? 'bg-white text-[#C1121F] shadow-sm'
-                    : 'text-white/70 hover:text-white'
-                )}
-              >
-                <MapPin className="h-3 w-3" />
-                Delivery
-              </button>
-              <button
-                onClick={() => handleToggleOrderType('pickup')}
-                className={cn(
-                  'flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-semibold transition-all',
-                  orderType === 'pickup'
-                    ? 'bg-white text-[#C1121F] shadow-sm'
-                    : 'text-white/70 hover:text-white'
-                )}
-              >
-                <Store className="h-3 w-3" />
-                Pickup
-              </button>
-            </div>
-          </div>
-
-          {/* Desktop Nav */}
-          <div className="hidden items-center gap-5 lg:flex">
-            {navLinks.map((link) =>
-              link.name === 'About Us' ? (
-                <button
-                  key={link.name}
-                  onClick={() => setShowAbout(true)}
-                  className="text-sm font-medium tracking-wide text-white/80 transition-colors hover:text-[#F4A261]"
-                >
-                  {link.name}
-                </button>
-              ) : (
-                <Link
-                  key={link.name}
-                  href={link.href}
-                  className="text-sm font-medium tracking-wide text-white/80 transition-colors hover:text-[#F4A261]"
-                >
-                  {link.name}
-                </Link>
-              )
-            )}
-          </div>
-
-          {/* Right Actions */}
-          <div className="flex items-center gap-1.5">
-            {/* Theme Toggle */}
-            {mounted && (
-              <button
-                onClick={toggleTheme}
-                className="rounded-full p-2 text-white/80 transition-colors hover:bg-white/10 hover:text-white"
-                aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
-              >
-                {theme === 'dark' ? <Sun className="h-4.5 w-4.5" /> : <Moon className="h-4.5 w-4.5" />}
-              </button>
-            )}
-
-            {/* Search */}
-            <div ref={searchContainerRef} className="relative">
-              {isSearchOpen ? (
-                <div className="flex items-center">
-                  <input
-                    ref={searchInputRef}
-                    type="text"
-                    placeholder="Search menu..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Escape') { setIsSearchOpen(false); setSearchQuery('') }
-                    }}
-                    className="w-40 rounded-full bg-white/15 px-4 py-1.5 text-sm text-white placeholder:text-white/50 focus:bg-white/20 focus:outline-none sm:w-52"
+        <div className="mx-auto max-w-7xl px-4 py-2 lg:px-8">
+          <div className="relative flex items-center justify-between">
+            {/* LEFT: Logo + Delivery/Pickup Toggle */}
+            <div className="flex items-center gap-3 flex-shrink-0">
+              {/* Logo */}
+              <Link href="/" className="flex items-center gap-2 flex-shrink-0">
+                <div className="relative h-10 w-10 flex-shrink-0 overflow-hidden rounded-full border-2 border-[#F4A261]/40">
+                  <Image
+                    src="/images/logo.png"
+                    alt="Fatty Patty"
+                    width={80}
+                    height={80}
+                    className="h-full w-full object-cover"
+                    priority
                   />
-                  <button
-                    onClick={() => { setIsSearchOpen(false); setSearchQuery('') }}
-                    className="ml-1 rounded-full p-1.5 text-white/80 hover:text-white"
-                    aria-label="Close search"
-                  >
-                    <X className="h-4 w-4" />
-                  </button>
-                  {searchQuery.trim() && (
-                    <div className="absolute right-0 top-full mt-2 w-72 overflow-hidden rounded-xl border border-border bg-card shadow-xl sm:w-80">
-                      {searchResults.length > 0 ? (
-                        <div className="max-h-80 overflow-y-auto">
-                          {searchResults.map((item) => (
-                            <button
-                              key={item.id}
-                              onClick={() => handleResultClick(item)}
-                              className="flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-muted"
-                            >
-                              <div className="relative h-10 w-10 flex-shrink-0 overflow-hidden rounded-lg">
-                                <Image src={item.image} alt={item.name} fill className="object-cover" />
-                              </div>
-                              <div className="flex-1 min-w-0">
-                                <p className="text-sm font-semibold text-foreground truncate">{item.name}</p>
-                                <p className="text-xs text-muted-foreground truncate">{item.description}</p>
-                              </div>
-                              <span className="flex-shrink-0 text-sm font-bold text-[#C1121F]">
-                                Rs. {item.price.toLocaleString()}
-                              </span>
-                            </button>
-                          ))}
-                        </div>
-                      ) : (
-                        <div className="px-4 py-6 text-center">
-                          <p className="text-sm text-muted-foreground">No items found</p>
-                        </div>
-                      )}
-                    </div>
-                  )}
                 </div>
-              ) : (
-                <button
-                  onClick={() => setIsSearchOpen(true)}
-                  className="rounded-full p-2 text-white/80 transition-colors hover:bg-white/10 hover:text-white"
-                  aria-label="Search menu"
-                >
-                  <Search className="h-5 w-5" />
-                </button>
+                <span className="hidden font-serif text-lg font-bold text-white xl:block">
+                  Fatty Patty
+                </span>
+              </Link>
+
+              {/* Delivery / Pickup Toggle (Pill Style) - near logo */}
+              <div className="hidden items-center sm:flex">
+                <div className="flex rounded-full border border-white/20 bg-white/10 p-0.5">
+                  <button
+                    onClick={() => handleToggleOrderType('delivery')}
+                    className={cn(
+                      'flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold transition-all',
+                      orderType === 'delivery'
+                        ? 'bg-white text-[#C1121F] shadow-sm'
+                        : 'text-white/70 hover:text-white'
+                    )}
+                  >
+                    <MapPin className="h-3 w-3" />
+                    Delivery
+                  </button>
+                  <button
+                    onClick={() => handleToggleOrderType('pickup')}
+                    className={cn(
+                      'flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold transition-all',
+                      orderType === 'pickup'
+                        ? 'bg-white text-[#C1121F] shadow-sm'
+                        : 'text-white/70 hover:text-white'
+                    )}
+                  >
+                    <Store className="h-3 w-3" />
+                    Pickup
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* CENTER: Nav Links - absolutely centered */}
+            <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 hidden lg:flex items-center gap-6">
+              {navLinks.map((link) =>
+                link.name === 'About Us' ? (
+                  <button
+                    key={link.name}
+                    onClick={() => setShowAbout(true)}
+                    className="text-sm font-medium tracking-wide text-white/80 transition-colors hover:text-[#F4A261]"
+                  >
+                    {link.name}
+                  </button>
+                ) : (
+                  <Link
+                    key={link.name}
+                    href={link.href}
+                    className={cn(
+                      'text-sm font-medium tracking-wide transition-colors hover:text-[#F4A261]',
+                      isActive(link.href)
+                        ? 'text-white font-semibold'
+                        : 'text-white/80'
+                    )}
+                  >
+                    {link.name}
+                  </Link>
+                )
               )}
             </div>
 
-            {/* Cart */}
-            <button
-              onClick={() => setIsCartOpen(true)}
-              className="relative rounded-full p-2 text-white/80 transition-colors hover:bg-white/10 hover:text-white"
-              aria-label="Shopping cart"
-            >
-              <ShoppingBag className="h-5 w-5" />
-              {totalItems > 0 && (
-                <span className="absolute -right-0.5 -top-0.5 flex h-5 w-5 items-center justify-center rounded-full bg-[#F4A261] text-xs font-bold text-[#1a1a1a]">
-                  {totalItems}
-                </span>
-              )}
-            </button>
+            {/* RIGHT: Search, Cart, Theme Toggle */}
+            <div className="flex items-center gap-1.5 flex-shrink-0">
+              {/* Search */}
+              <div ref={searchContainerRef} className="relative">
+                {isSearchOpen ? (
+                  <div className="flex items-center">
+                    <input
+                      ref={searchInputRef}
+                      type="text"
+                      placeholder="Search menu..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Escape') { setIsSearchOpen(false); setSearchQuery('') }
+                      }}
+                      className="w-40 rounded-full bg-white/15 px-4 py-1.5 text-sm text-white placeholder:text-white/50 focus:bg-white/20 focus:outline-none sm:w-52"
+                    />
+                    <button
+                      onClick={() => { setIsSearchOpen(false); setSearchQuery('') }}
+                      className="ml-1 rounded-full p-1.5 text-white/80 hover:text-white"
+                      aria-label="Close search"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                    {searchQuery.trim() && (
+                      <div className="absolute right-0 top-full mt-2 w-72 overflow-hidden rounded-xl border border-border bg-card shadow-xl sm:w-80">
+                        {searchResults.length > 0 ? (
+                          <div className="max-h-80 overflow-y-auto">
+                            {searchResults.map((item) => (
+                              <button
+                                key={item.id}
+                                onClick={() => handleResultClick(item)}
+                                className="flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-muted"
+                              >
+                                <div className="relative h-10 w-10 flex-shrink-0 overflow-hidden rounded-lg">
+                                  <Image src={item.image} alt={item.name} fill className="object-cover" />
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-sm font-semibold text-foreground truncate">{item.name}</p>
+                                  <p className="text-xs text-muted-foreground truncate">{item.description}</p>
+                                </div>
+                                <span className="flex-shrink-0 text-sm font-bold text-[#C1121F]">
+                                  Rs. {item.price.toLocaleString()}
+                                </span>
+                              </button>
+                            ))}
+                          </div>
+                        ) : (
+                          <div className="px-4 py-6 text-center">
+                            <p className="text-sm text-muted-foreground">No items found</p>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => setIsSearchOpen(true)}
+                    className="rounded-full p-2 text-white/80 transition-colors hover:bg-white/10 hover:text-white"
+                    aria-label="Search menu"
+                  >
+                    <Search className="h-5 w-5" />
+                  </button>
+                )}
+              </div>
 
-            {/* Mobile Menu Toggle */}
-            <button
-              className="rounded-full p-2 text-white/80 transition-colors hover:bg-white/10 lg:hidden"
-              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              aria-label="Toggle menu"
-            >
-              {isMobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-            </button>
+              {/* Cart */}
+              <button
+                onClick={() => setIsCartOpen(true)}
+                className="relative rounded-full p-2 text-white/80 transition-colors hover:bg-white/10 hover:text-white"
+                aria-label="Shopping cart"
+              >
+                <ShoppingBag className="h-5 w-5" />
+                {totalItems > 0 && (
+                  <span className="absolute -right-0.5 -top-0.5 flex h-5 w-5 items-center justify-center rounded-full bg-[#F4A261] text-xs font-bold text-[#1a1a1a]">
+                    {totalItems}
+                  </span>
+                )}
+              </button>
+
+              {/* Theme Toggle */}
+              {mounted && (
+                <button
+                  onClick={toggleTheme}
+                  className="rounded-full p-2 text-white/80 transition-colors hover:bg-white/10 hover:text-white"
+                  aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
+                >
+                  {theme === 'dark' ? <Sun className="h-[18px] w-[18px]" /> : <Moon className="h-[18px] w-[18px]" />}
+                </button>
+              )}
+
+              {/* Mobile Menu Toggle */}
+              <button
+                className="rounded-full p-2 text-white/80 transition-colors hover:bg-white/10 lg:hidden"
+                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                aria-label="Toggle menu"
+              >
+                {isMobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+              </button>
+            </div>
           </div>
         </div>
 
@@ -279,7 +293,7 @@ export function Navbar({ onItemClick }: NavbarProps) {
         >
           <div className="mx-auto flex max-w-7xl flex-col gap-1 px-4 pb-3 pt-1">
             {/* Mobile Delivery/Pickup Toggle */}
-            <div className="mb-2 flex rounded-full border border-white/20 bg-white/10 p-0.5">
+            <div className="mb-2 flex rounded-full border border-white/20 bg-white/10 p-0.5 sm:hidden">
               <button
                 onClick={() => handleToggleOrderType('delivery')}
                 className={cn(
@@ -316,7 +330,10 @@ export function Navbar({ onItemClick }: NavbarProps) {
                   key={link.name}
                   href={link.href}
                   onClick={() => setIsMobileMenuOpen(false)}
-                  className="rounded-lg px-4 py-2.5 text-sm font-medium text-white/80 transition-colors hover:bg-white/10 hover:text-white"
+                  className={cn(
+                    'rounded-lg px-4 py-2.5 text-sm font-medium transition-colors hover:bg-white/10',
+                    isActive(link.href) ? 'text-white bg-white/10' : 'text-white/80 hover:text-white'
+                  )}
                 >
                   {link.name}
                 </Link>
