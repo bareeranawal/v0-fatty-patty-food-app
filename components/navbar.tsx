@@ -1,9 +1,9 @@
 "use client"
 
-import { useState, useEffect, useRef, useMemo } from 'react'
+import { useState, useEffect, useRef, useMemo, useCallback } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+import { useRouter, usePathname } from 'next/navigation'
 import { Search, ShoppingBag, Menu, X, Info, Sun, Moon, MapPin, Store } from 'lucide-react'
 import { useTheme } from 'next-themes'
 import { useCart } from '@/lib/cart-context'
@@ -12,11 +12,19 @@ import { menuItems } from '@/lib/menu-data'
 import type { MenuItem } from '@/lib/menu-data'
 import { cn } from '@/lib/utils'
 
-const navLinks = [
-  { name: 'Home', href: '/' },
-  { name: 'Menu', href: '/menu' },
-  { name: 'About Us', href: '#about' },
-  { name: 'Contact', href: '#contact' },
+type NavLink = {
+  name: string
+  href: string
+  type: 'route' | 'scroll' | 'modal'
+  scrollTarget?: string
+}
+
+const navLinks: NavLink[] = [
+  { name: 'Home', href: '/', type: 'route' },
+  { name: 'Menu', href: '/menu', type: 'route' },
+  { name: 'Deals', href: '/#deals', type: 'scroll', scrollTarget: 'deals' },
+  { name: 'About Us', href: '#about', type: 'modal' },
+  { name: 'Contact', href: '/#contact', type: 'scroll', scrollTarget: 'contact' },
 ]
 
 interface NavbarProps {
@@ -36,6 +44,7 @@ export function Navbar({ onItemClick }: NavbarProps) {
   const searchInputRef = useRef<HTMLInputElement>(null)
   const searchContainerRef = useRef<HTMLDivElement>(null)
   const router = useRouter()
+  const pathname = usePathname()
 
   useEffect(() => { setMounted(true) }, [])
 
@@ -87,6 +96,50 @@ export function Navbar({ onItemClick }: NavbarProps) {
     setOrderType(type)
   }
 
+  const scrollToSection = useCallback((sectionId: string) => {
+    const el = document.getElementById(sectionId)
+    if (el) {
+      const navbarHeight = 64
+      const elementPosition = el.getBoundingClientRect().top + window.scrollY
+      window.scrollTo({
+        top: elementPosition - navbarHeight,
+        behavior: 'smooth',
+      })
+    }
+  }, [])
+
+  const handleNavClick = useCallback((link: NavLink, e: React.MouseEvent) => {
+    e.preventDefault()
+    setIsMobileMenuOpen(false)
+
+    if (link.type === 'modal') {
+      setShowAbout(true)
+      return
+    }
+
+    if (link.type === 'route' && link.href === '/') {
+      if (pathname === '/') {
+        window.scrollTo({ top: 0, behavior: 'smooth' })
+      } else {
+        router.push('/')
+      }
+      return
+    }
+
+    if (link.type === 'route') {
+      router.push(link.href)
+      return
+    }
+
+    if (link.type === 'scroll' && link.scrollTarget) {
+      if (pathname === '/') {
+        scrollToSection(link.scrollTarget)
+      } else {
+        router.push(`/?scrollTo=${link.scrollTarget}`)
+      }
+    }
+  }, [pathname, router, scrollToSection])
+
   return (
     <>
       <nav
@@ -98,74 +151,66 @@ export function Navbar({ onItemClick }: NavbarProps) {
         )}
       >
         <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-2 lg:px-8">
-          {/* Logo */}
-          <Link href="/" className="flex items-center gap-2.5 flex-shrink-0">
-            <div className="relative h-10 w-10 flex-shrink-0 overflow-hidden rounded-full border-2 border-[#F4A261]/40">
-              <Image
-                src="/images/logo.png"
-                alt="Fatty Patty"
-                width={80}
-                height={80}
-                className="h-full w-full object-cover"
-                priority
-              />
-            </div>
-            <span className="hidden font-serif text-lg font-bold text-white sm:block">
-              Fatty Patty
-            </span>
-          </Link>
+          {/* Left: Logo + Delivery/Pickup Toggle */}
+          <div className="flex items-center gap-3 flex-shrink-0">
+            <Link href="/" className="flex items-center gap-2.5 flex-shrink-0">
+              <div className="relative h-10 w-10 flex-shrink-0 overflow-hidden rounded-full border-2 border-[#F4A261]/40">
+                <Image
+                  src="/images/logo.png"
+                  alt="Fatty Patty"
+                  width={80}
+                  height={80}
+                  className="h-full w-full object-cover"
+                  priority
+                />
+              </div>
+              <span className="hidden font-serif text-lg font-bold text-white sm:block">
+                Fatty Patty
+              </span>
+            </Link>
 
-          {/* Delivery / Pickup Toggle (Pill Style) */}
-          <div className="hidden items-center sm:flex">
-            <div className="flex rounded-full border border-white/20 bg-white/10 p-0.5">
-              <button
-                onClick={() => handleToggleOrderType('delivery')}
-                className={cn(
-                  'flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-semibold transition-all',
-                  orderType === 'delivery'
-                    ? 'bg-white text-[#C1121F] shadow-sm'
-                    : 'text-white/70 hover:text-white'
-                )}
-              >
-                <MapPin className="h-3 w-3" />
-                Delivery
-              </button>
-              <button
-                onClick={() => handleToggleOrderType('pickup')}
-                className={cn(
-                  'flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-semibold transition-all',
-                  orderType === 'pickup'
-                    ? 'bg-white text-[#C1121F] shadow-sm'
-                    : 'text-white/70 hover:text-white'
-                )}
-              >
-                <Store className="h-3 w-3" />
-                Pickup
-              </button>
+            {/* Delivery / Pickup Toggle (Pill Style) */}
+            <div className="hidden items-center sm:flex">
+              <div className="flex rounded-full border border-white/20 bg-white/10 p-0.5">
+                <button
+                  onClick={() => handleToggleOrderType('delivery')}
+                  className={cn(
+                    'flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-semibold transition-all',
+                    orderType === 'delivery'
+                      ? 'bg-white text-[#C1121F] shadow-sm'
+                      : 'text-white/70 hover:text-white'
+                  )}
+                >
+                  <MapPin className="h-3 w-3" />
+                  Delivery
+                </button>
+                <button
+                  onClick={() => handleToggleOrderType('pickup')}
+                  className={cn(
+                    'flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-semibold transition-all',
+                    orderType === 'pickup'
+                      ? 'bg-white text-[#C1121F] shadow-sm'
+                      : 'text-white/70 hover:text-white'
+                  )}
+                >
+                  <Store className="h-3 w-3" />
+                  Pickup
+                </button>
+              </div>
             </div>
           </div>
 
-          {/* Desktop Nav */}
+          {/* Center: Desktop Nav */}
           <div className="hidden items-center gap-5 lg:flex">
-            {navLinks.map((link) =>
-              link.name === 'About Us' ? (
-                <button
-                  key={link.name}
-                  onClick={() => setShowAbout(true)}
-                  className="text-sm font-medium tracking-wide text-white/80 transition-colors hover:text-[#F4A261]"
-                >
-                  {link.name}
-                </button>
-              ) : (
-                <Link
-                  key={link.name}
-                  href={link.href}
-                  className="text-sm font-medium tracking-wide text-white/80 transition-colors hover:text-[#F4A261]"
-                >
-                  {link.name}
-                </Link>
-              )
-            )}
+            {navLinks.map((link) => (
+              <button
+                key={link.name}
+                onClick={(e) => handleNavClick(link, e)}
+                className="text-sm font-medium tracking-wide text-white/80 transition-colors hover:text-[#F4A261]"
+              >
+                {link.name}
+              </button>
+            ))}
           </div>
 
           {/* Right Actions */}
@@ -302,26 +347,15 @@ export function Navbar({ onItemClick }: NavbarProps) {
               </button>
             </div>
 
-            {navLinks.map((link) =>
-              link.name === 'About Us' ? (
-                <button
-                  key={link.name}
-                  onClick={() => { setShowAbout(true); setIsMobileMenuOpen(false) }}
-                  className="rounded-lg px-4 py-2.5 text-left text-sm font-medium text-white/80 transition-colors hover:bg-white/10 hover:text-white"
-                >
-                  {link.name}
-                </button>
-              ) : (
-                <Link
-                  key={link.name}
-                  href={link.href}
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className="rounded-lg px-4 py-2.5 text-sm font-medium text-white/80 transition-colors hover:bg-white/10 hover:text-white"
-                >
-                  {link.name}
-                </Link>
-              )
-            )}
+            {navLinks.map((link) => (
+              <button
+                key={link.name}
+                onClick={(e) => handleNavClick(link, e)}
+                className="rounded-lg px-4 py-2.5 text-left text-sm font-medium text-white/80 transition-colors hover:bg-white/10 hover:text-white"
+              >
+                {link.name}
+              </button>
+            ))}
           </div>
         </div>
       </nav>

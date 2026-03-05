@@ -1,6 +1,7 @@
 "use client"
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useSearchParams, useRouter } from 'next/navigation'
 import { Navbar } from '@/components/navbar'
 import { Hero } from '@/components/hero'
 import { Categories } from '@/components/categories'
@@ -20,6 +21,30 @@ export default function HomePage() {
   const [selectedItem, setSelectedItem] = useState<MenuItem | null>(null)
   const [selectedDeal, setSelectedDeal] = useState<Deal | null>(null)
   const { hasCompletedSetup } = useOrder()
+  const searchParams = useSearchParams()
+  const router = useRouter()
+
+  // Handle scrollTo query param (when navigating from another page)
+  useEffect(() => {
+    const scrollTo = searchParams.get('scrollTo')
+    if (scrollTo && hasCompletedSetup) {
+      // Small delay to let the page render
+      const timer = setTimeout(() => {
+        const el = document.getElementById(scrollTo)
+        if (el) {
+          const navbarHeight = 64
+          const elementPosition = el.getBoundingClientRect().top + window.scrollY
+          window.scrollTo({
+            top: elementPosition - navbarHeight,
+            behavior: 'smooth',
+          })
+        }
+        // Clean up the URL without reloading
+        router.replace('/', { scroll: false })
+      }, 300)
+      return () => clearTimeout(timer)
+    }
+  }, [searchParams, hasCompletedSetup, router])
 
   if (!hasCompletedSetup) {
     return <WelcomeScreen />

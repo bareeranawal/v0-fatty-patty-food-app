@@ -11,7 +11,7 @@ interface PromotionsProps {
 
 export function Promotions({ onDealClick }: PromotionsProps) {
   return (
-    <section id="offers" className="bg-muted/50 py-14 lg:py-20">
+    <section id="deals" className="bg-muted/50 py-14 lg:py-20">
       <div className="mx-auto max-w-7xl px-4 lg:px-8">
         <div className="mb-10 text-center">
           <span className="mb-3 inline-block text-sm font-semibold uppercase tracking-widest text-[#C1121F]">

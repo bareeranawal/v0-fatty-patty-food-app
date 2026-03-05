@@ -22,8 +22,10 @@ export function CartDrawer({ onItemClick }: CartDrawerProps) {
   const deliveryFee = orderType === 'delivery' && subtotal > 0 ? 150 : 0
   const total = subtotal + deliveryFee
 
-  const handleItemClick = (itemId: string) => {
-    const menuItem = menuItems.find((m) => m.id === itemId)
+  const handleItemClick = (cartItem: { menuItem: MenuItem }) => {
+    // For deals (category === 'deals'), we don't re-open modal since they use DealModal
+    if (cartItem.menuItem.category === 'deals') return
+    const menuItem = menuItems.find((m) => m.id === cartItem.menuItem.id)
     if (menuItem && onItemClick) {
       setIsCartOpen(false)
       onItemClick(menuItem)
@@ -84,7 +86,7 @@ export function CartDrawer({ onItemClick }: CartDrawerProps) {
                     className="flex gap-3 rounded-xl border border-border bg-background p-3 transition-all duration-200 hover:border-[#C1121F]/30"
                   >
                     <button
-                      onClick={() => handleItemClick(item.menuItem.id)}
+                      onClick={() => handleItemClick(item)}
                       className="relative h-16 w-16 flex-shrink-0 overflow-hidden rounded-lg"
                       aria-label={`View ${item.menuItem.name}`}
                     >
@@ -98,7 +100,7 @@ export function CartDrawer({ onItemClick }: CartDrawerProps) {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-start justify-between gap-2">
                         <button
-                          onClick={() => handleItemClick(item.menuItem.id)}
+                          onClick={() => handleItemClick(item)}
                           className="text-left"
                         >
                           <h4 className="text-sm font-bold text-foreground truncate hover:text-[#C1121F] transition-colors">
