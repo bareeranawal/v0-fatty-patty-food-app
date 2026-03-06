@@ -264,6 +264,157 @@ create trigger trigger_orders_updated
   for each row
   execute function update_updated_at();
 
+-- ==============================================
+-- ADMIN POLICIES FOR CRUD OPERATIONS
+-- ==============================================
+
+-- Admin policies for categories
+create policy "admin_categories_insert" on public.categories 
+  for insert with check (
+    exists (select 1 from public.admin_users where id = auth.uid() and is_active = true)
+  );
+
+create policy "admin_categories_update" on public.categories 
+  for update using (
+    exists (select 1 from public.admin_users where id = auth.uid() and is_active = true)
+  );
+
+create policy "admin_categories_delete" on public.categories 
+  for delete using (
+    exists (select 1 from public.admin_users where id = auth.uid() and is_active = true)
+  );
+
+-- Allow admins to see all categories (including inactive)
+create policy "admin_categories_select_all" on public.categories 
+  for select using (
+    exists (select 1 from public.admin_users where id = auth.uid() and is_active = true)
+  );
+
+-- Admin policies for menu_items
+create policy "admin_menu_items_insert" on public.menu_items 
+  for insert with check (
+    exists (select 1 from public.admin_users where id = auth.uid() and is_active = true)
+  );
+
+create policy "admin_menu_items_update" on public.menu_items 
+  for update using (
+    exists (select 1 from public.admin_users where id = auth.uid() and is_active = true)
+  );
+
+create policy "admin_menu_items_delete" on public.menu_items 
+  for delete using (
+    exists (select 1 from public.admin_users where id = auth.uid() and is_active = true)
+  );
+
+-- Allow admins to see all menu items (including unavailable)
+create policy "admin_menu_items_select_all" on public.menu_items 
+  for select using (
+    exists (select 1 from public.admin_users where id = auth.uid() and is_active = true)
+  );
+
+-- Admin policies for deals
+create policy "admin_deals_insert" on public.deals 
+  for insert with check (
+    exists (select 1 from public.admin_users where id = auth.uid() and is_active = true)
+  );
+
+create policy "admin_deals_update" on public.deals 
+  for update using (
+    exists (select 1 from public.admin_users where id = auth.uid() and is_active = true)
+  );
+
+create policy "admin_deals_delete" on public.deals 
+  for delete using (
+    exists (select 1 from public.admin_users where id = auth.uid() and is_active = true)
+  );
+
+-- Allow admins to see all deals (including inactive)
+create policy "admin_deals_select_all" on public.deals 
+  for select using (
+    exists (select 1 from public.admin_users where id = auth.uid() and is_active = true)
+  );
+
+-- Admin policies for orders (update)
+create policy "admin_orders_update" on public.orders 
+  for update using (
+    exists (select 1 from public.admin_users where id = auth.uid() and is_active = true)
+  );
+
+-- Admin policies for add_ons
+create policy "admin_add_ons_insert" on public.add_ons 
+  for insert with check (
+    exists (select 1 from public.admin_users where id = auth.uid() and is_active = true)
+  );
+
+create policy "admin_add_ons_update" on public.add_ons 
+  for update using (
+    exists (select 1 from public.admin_users where id = auth.uid() and is_active = true)
+  );
+
+create policy "admin_add_ons_delete" on public.add_ons 
+  for delete using (
+    exists (select 1 from public.admin_users where id = auth.uid() and is_active = true)
+  );
+
+-- Admin policies for drink_options
+create policy "admin_drink_options_insert" on public.drink_options 
+  for insert with check (
+    exists (select 1 from public.admin_users where id = auth.uid() and is_active = true)
+  );
+
+create policy "admin_drink_options_update" on public.drink_options 
+  for update using (
+    exists (select 1 from public.admin_users where id = auth.uid() and is_active = true)
+  );
+
+create policy "admin_drink_options_delete" on public.drink_options 
+  for delete using (
+    exists (select 1 from public.admin_users where id = auth.uid() and is_active = true)
+  );
+
+-- Admin policies for branches
+create policy "admin_branches_insert" on public.branches 
+  for insert with check (
+    exists (select 1 from public.admin_users where id = auth.uid() and is_active = true)
+  );
+
+create policy "admin_branches_update" on public.branches 
+  for update using (
+    exists (select 1 from public.admin_users where id = auth.uid() and is_active = true)
+  );
+
+create policy "admin_branches_delete" on public.branches 
+  for delete using (
+    exists (select 1 from public.admin_users where id = auth.uid() and is_active = true)
+  );
+
+-- Admin policies for delivery_areas
+create policy "admin_delivery_areas_insert" on public.delivery_areas 
+  for insert with check (
+    exists (select 1 from public.admin_users where id = auth.uid() and is_active = true)
+  );
+
+create policy "admin_delivery_areas_update" on public.delivery_areas 
+  for update using (
+    exists (select 1 from public.admin_users where id = auth.uid() and is_active = true)
+  );
+
+create policy "admin_delivery_areas_delete" on public.delivery_areas 
+  for delete using (
+    exists (select 1 from public.admin_users where id = auth.uid() and is_active = true)
+  );
+
+-- Admin policies for order_status_history
+create policy "admin_order_status_history_insert" on public.order_status_history 
+  for insert with check (
+    exists (select 1 from public.admin_users where id = auth.uid() and is_active = true)
+  );
+
+-- ==============================================
+-- ENABLE REALTIME FOR ORDERS
+-- ==============================================
+alter publication supabase_realtime add table public.orders;
+
 -- Function to log order status changes
 create or replace function log_order_status_change()
 returns trigger
