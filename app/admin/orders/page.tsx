@@ -19,10 +19,14 @@ import { cn } from '@/lib/utils'
 
 interface OrderItem {
   id: string
-  item_name: string
+  name: string
+  title?: string | null
+  type: 'menu_item' | 'deal'
   quantity: number
-  unit_price: number
-  total_price: number
+  unitPrice: number
+  totalPrice: number
+  addOns?: Array<{ id: string; name: string; price: number }>
+  specialInstructions?: string | null
 }
 
 interface Order {
@@ -33,11 +37,14 @@ interface Order {
   customer_email: string | null
   order_type: 'delivery' | 'pickup'
   status: string
+  delivery_area: string | null
   delivery_address: string | null
+  pickup_branch: string | null
   delivery_fee: number
   subtotal: number
-  total_amount: number
+  total: number
   special_instructions: string | null
+  estimated_time: string | null
   created_at: string
   items: OrderItem[]
 }
@@ -240,7 +247,7 @@ function OrdersContent() {
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="font-semibold text-foreground">Rs. {order.total_amount.toLocaleString()}</span>
+                    <span className="font-semibold text-foreground">Rs. {order.total.toLocaleString()}</span>
                     <ChevronRight className="h-4 w-4 text-muted-foreground" />
                   </div>
                 </button>
