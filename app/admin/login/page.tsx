@@ -17,11 +17,11 @@ export default function AdminLoginPage() {
   // Check if already logged in
   useEffect(() => {
     if (typeof window !== 'undefined' && localStorage.getItem('adminAuth') === 'true') {
-      router.push('/admin')
+      window.location.href = '/admin'
     }
-  }, [router])
+  }, [])
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleLogin = (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
     setError(null)
@@ -31,12 +31,11 @@ export default function AdminLoginPage() {
 
     if (emailInput === ADMIN_EMAIL.toLowerCase() && passwordInput === ADMIN_PASSWORD) {
       localStorage.setItem('adminAuth', 'true')
-      router.push('/admin')
+      window.location.href = '/admin'
     } else {
       setError('Invalid credentials')
+      setIsLoading(false)
     }
-    
-    setIsLoading(false)
   }
 
   return (
