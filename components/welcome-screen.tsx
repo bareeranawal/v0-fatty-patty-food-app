@@ -1,182 +1,316 @@
 "use client"
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Image from 'next/image'
-import { MapPin, Store, ChevronRight } from 'lucide-react'
+import { MapPin, ShoppingBag, ChevronDown, Store, ArrowLeft } from 'lucide-react'
+import { motion, AnimatePresence } from 'framer-motion'
 import { useOrder, deliveryAreas, branches } from '@/lib/order-context'
 import type { Branch } from '@/lib/order-context'
 import { cn } from '@/lib/utils'
 
 export function WelcomeScreen() {
   const { setOrderType, setSelectedArea, setSelectedBranch, setHasCompletedSetup } = useOrder()
-  const [step, setStep] = useState<'type' | 'area' | 'branch'>('type')
-  const [localOrderType, setLocalOrderType] = useState<'delivery' | 'pickup' | null>(null)
-  const [localArea, setLocalArea] = useState('')
-  const [localBranch, setLocalBranch] = useState<Branch | null>(null)
+  const [orderMode, setOrderMode] = useState<'delivery' | 'takeaway'>('delivery')
+  const [selectedAreaValue, setSelectedAreaValue] = useState('')
+  const [selectedBranchValue, setSelectedBranchValue] = useState<Branch | null>(null)
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false)
+  const [mounted, setMounted] = useState(false)
 
-  const handleSelectType = (type: 'delivery' | 'pickup') => {
-    setLocalOrderType(type)
-    if (type === 'delivery') {
-      setStep('area')
-    } else {
-      setStep('branch')
-    }
-  }
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   const handleContinue = () => {
-    if (localOrderType === 'delivery' && localArea) {
+    if (orderMode === 'delivery' && selectedAreaValue) {
       setOrderType('delivery')
-      setSelectedArea(localArea)
+      setSelectedArea(selectedAreaValue)
       setHasCompletedSetup(true)
-    } else if (localOrderType === 'pickup' && localBranch) {
+    } else if (orderMode === 'takeaway' && selectedBranchValue) {
       setOrderType('pickup')
-      setSelectedBranch(localBranch)
+      setSelectedBranch(selectedBranchValue)
       setHasCompletedSetup(true)
     }
   }
 
+  const canContinue = orderMode === 'delivery' ? !!selectedAreaValue : !!selectedBranchValue
+
+  if (!mounted) return null
+
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-[#8B0000] p-4">
-      {/* Background pattern */}
-      <div className="absolute inset-0 opacity-5">
-        <div className="h-full w-full" style={{ backgroundImage: 'radial-gradient(circle, #fff 1px, transparent 1px)', backgroundSize: '24px 24px' }} />
+    <div className="fixed inset-0 z-[100] flex min-h-screen items-center justify-center overflow-y-auto bg-gradient-to-br from-[#FFF8F0] via-[#FFE8D6] to-[#FFDAB9] p-4">
+      {/* Subtle decorative elements */}
+      <div className="pointer-events-none absolute inset-0 overflow-hidden">
+        <div className="absolute -left-20 -top-20 h-96 w-96 rounded-full bg-[#FCA311]/5 blur-3xl" />
+        <div className="absolute -bottom-20 -right-20 h-96 w-96 rounded-full bg-[#C1121F]/5 blur-3xl" />
       </div>
 
-      <div className="relative w-full max-w-md animate-fade-in-up">
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        className="relative w-full max-w-lg"
+      >
         {/* Logo */}
-        <div className="mb-8 flex flex-col items-center">
-          <div className="mb-4 h-24 w-24 overflow-hidden rounded-full border-3 border-[#FCA311]/50 shadow-2xl">
+        <motion.div 
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.5, delay: 0.1 }}
+          className="mb-8 flex justify-center"
+        >
+          <div className="h-28 w-28 overflow-hidden rounded-2xl bg-[#8B0000] p-2 shadow-xl">
             <Image
               src="/images/logo.png"
               alt="Fatty Patty"
-              width={96}
-              height={96}
-              className="h-full w-full object-cover"
+              width={112}
+              height={112}
+              className="h-full w-full object-contain"
               priority
             />
           </div>
-          <h1 className="font-serif text-3xl font-bold text-white">Fatty Patty</h1>
-          <p className="mt-1 text-sm text-white/60">Original Taste Since 2020</p>
-        </div>
+        </motion.div>
 
-        {/* Step: Choose Order Type */}
-        {step === 'type' && (
-          <div className="animate-fade-in-up">
-            <h2 className="mb-6 text-center text-lg font-semibold text-white">Choose Order Type</h2>
-            <div className="grid grid-cols-2 gap-4">
-              <button
-                onClick={() => handleSelectType('delivery')}
-                className="group flex flex-col items-center gap-3 rounded-2xl border-2 border-white/10 bg-white/5 p-6 backdrop-blur-sm transition-all hover:border-[#FCA311]/50 hover:bg-white/10"
-              >
-                <div className="flex h-14 w-14 items-center justify-center rounded-full bg-[#FCA311]/20">
-                  <MapPin className="h-7 w-7 text-[#FCA311]" />
-                </div>
-                <span className="text-base font-semibold text-white">Delivery</span>
-                <span className="text-xs text-white/50">To your doorstep</span>
-              </button>
-              <button
-                onClick={() => handleSelectType('pickup')}
-                className="group flex flex-col items-center gap-3 rounded-2xl border-2 border-white/10 bg-white/5 p-6 backdrop-blur-sm transition-all hover:border-[#FCA311]/50 hover:bg-white/10"
-              >
-                <div className="flex h-14 w-14 items-center justify-center rounded-full bg-[#FCA311]/20">
-                  <Store className="h-7 w-7 text-[#FCA311]" />
-                </div>
-                <span className="text-base font-semibold text-white">Pickup</span>
-                <span className="text-xs text-white/50">From our branch</span>
-              </button>
+        {/* Heading */}
+        <motion.div 
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.2 }}
+          className="mb-8 text-center"
+        >
+          <h1 className="font-serif text-3xl font-bold text-[#1a1a1a] md:text-4xl">
+            How would you like to order?
+          </h1>
+          <p className="mt-2 text-base text-[#6b6b6b]">
+            Choose your order type to get started
+          </p>
+        </motion.div>
+
+        {/* Order Type Selection */}
+        <motion.div 
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.3 }}
+          className="mb-6 grid grid-cols-2 gap-4"
+        >
+          {/* Delivery Card */}
+          <button
+            onClick={() => setOrderMode('delivery')}
+            className={cn(
+              'group relative flex flex-col items-center gap-3 rounded-2xl border-2 bg-white p-6 transition-all duration-200',
+              orderMode === 'delivery'
+                ? 'border-[#C1121F] bg-[#C1121F]/5 shadow-lg'
+                : 'border-gray-200 hover:border-gray-300 hover:shadow-md'
+            )}
+          >
+            <div className={cn(
+              'flex h-14 w-14 items-center justify-center rounded-xl transition-colors',
+              orderMode === 'delivery'
+                ? 'bg-[#C1121F]'
+                : 'bg-gray-100 group-hover:bg-gray-200'
+            )}>
+              <MapPin className={cn(
+                'h-7 w-7',
+                orderMode === 'delivery' ? 'text-white' : 'text-gray-500'
+              )} />
             </div>
-          </div>
-        )}
+            <div className="text-center">
+              <p className={cn(
+                'text-lg font-semibold',
+                orderMode === 'delivery' ? 'text-[#1a1a1a]' : 'text-gray-700'
+              )}>
+                Delivery
+              </p>
+              <p className="mt-0.5 text-sm text-gray-500">
+                To your doorstep
+              </p>
+            </div>
+          </button>
 
-        {/* Step: Select Delivery Area */}
-        {step === 'area' && (
-          <div className="animate-fade-in-up">
-            <button
-              onClick={() => setStep('type')}
-              className="mb-4 flex items-center gap-1 text-sm text-white/60 transition-colors hover:text-white"
+          {/* Takeaway Card */}
+          <button
+            onClick={() => setOrderMode('takeaway')}
+            className={cn(
+              'group relative flex flex-col items-center gap-3 rounded-2xl border-2 bg-white p-6 transition-all duration-200',
+              orderMode === 'takeaway'
+                ? 'border-[#C1121F] bg-[#C1121F]/5 shadow-lg'
+                : 'border-gray-200 hover:border-gray-300 hover:shadow-md'
+            )}
+          >
+            <div className={cn(
+              'flex h-14 w-14 items-center justify-center rounded-xl transition-colors',
+              orderMode === 'takeaway'
+                ? 'bg-[#C1121F]'
+                : 'bg-gray-100 group-hover:bg-gray-200'
+            )}>
+              <ShoppingBag className={cn(
+                'h-7 w-7',
+                orderMode === 'takeaway' ? 'text-white' : 'text-gray-500'
+              )} />
+            </div>
+            <div className="text-center">
+              <p className={cn(
+                'text-lg font-semibold',
+                orderMode === 'takeaway' ? 'text-[#1a1a1a]' : 'text-gray-700'
+              )}>
+                Takeaway
+              </p>
+              <p className="mt-0.5 text-sm text-gray-500">
+                Pick up at store
+              </p>
+            </div>
+          </button>
+        </motion.div>
+
+        {/* Delivery Area Dropdown */}
+        <AnimatePresence mode="wait">
+          {orderMode === 'delivery' && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.3 }}
+              className="mb-6"
             >
-              <ChevronRight className="h-4 w-4 rotate-180" />
-              Back
-            </button>
-            <h2 className="mb-2 text-center text-lg font-semibold text-white">Select Delivery Area</h2>
-            <p className="mb-5 text-center text-xs text-white/50">We deliver within 20km of our branches</p>
-            <div className="mb-5 max-h-56 overflow-y-auto rounded-xl border border-white/10 bg-white/5 backdrop-blur-sm">
-              {deliveryAreas.map((area) => (
+              <label className="mb-2 block text-sm font-medium text-[#1a1a1a]">
+                Select your area
+              </label>
+              <div className="relative">
                 <button
-                  key={area}
-                  onClick={() => setLocalArea(area)}
+                  onClick={() => setIsDropdownOpen(!isDropdownOpen)}
                   className={cn(
-                    'flex w-full items-center justify-between px-4 py-3 text-left text-sm transition-all border-b border-white/5 last:border-0',
-                    localArea === area
-                      ? 'bg-[#FCA311]/20 text-[#FCA311] font-medium'
-                      : 'text-white/80 hover:bg-white/5'
+                    'flex w-full items-center justify-between rounded-2xl border-2 bg-white px-4 py-4 text-left transition-all',
+                    isDropdownOpen || selectedAreaValue
+                      ? 'border-[#C1121F]'
+                      : 'border-gray-200 hover:border-gray-300'
                   )}
                 >
-                  <span>{area}</span>
-                  {localArea === area && (
-                    <div className="h-2 w-2 rounded-full bg-[#FCA311]" />
-                  )}
+                  <span className={selectedAreaValue ? 'text-[#1a1a1a]' : 'text-gray-400'}>
+                    {selectedAreaValue || 'Choose your delivery area'}
+                  </span>
+                  <ChevronDown className={cn(
+                    'h-5 w-5 text-gray-400 transition-transform',
+                    isDropdownOpen && 'rotate-180'
+                  )} />
                 </button>
-              ))}
-            </div>
-            <button
-              onClick={handleContinue}
-              disabled={!localArea}
-              className="w-full rounded-xl bg-[#FCA311] py-3.5 text-sm font-semibold text-[#1a1a1a] transition-all hover:bg-[#FCA311]/90 disabled:opacity-40 disabled:cursor-not-allowed"
-            >
-              Continue
-            </button>
-          </div>
-        )}
 
-        {/* Step: Select Branch */}
-        {step === 'branch' && (
-          <div className="animate-fade-in-up">
-            <button
-              onClick={() => setStep('type')}
-              className="mb-4 flex items-center gap-1 text-sm text-white/60 transition-colors hover:text-white"
-            >
-              <ChevronRight className="h-4 w-4 rotate-180" />
-              Back
-            </button>
-            <h2 className="mb-5 text-center text-lg font-semibold text-white">Select Branch</h2>
-            <div className="mb-5 space-y-3">
-              {branches.map((branch) => (
-                <button
-                  key={branch.id}
-                  onClick={() => setLocalBranch(branch.id)}
-                  className={cn(
-                    'flex w-full items-start gap-4 rounded-2xl border-2 p-5 text-left transition-all',
-                    localBranch === branch.id
-                      ? 'border-[#FCA311] bg-[#FCA311]/10'
-                      : 'border-white/10 bg-white/5 hover:border-white/20'
+                <AnimatePresence>
+                  {isDropdownOpen && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -10 }}
+                      transition={{ duration: 0.2 }}
+                      className="absolute left-0 right-0 top-full z-50 mt-2 max-h-64 overflow-y-auto rounded-2xl border border-gray-200 bg-white shadow-xl"
+                    >
+                      {deliveryAreas.map((area) => (
+                        <button
+                          key={area}
+                          onClick={() => {
+                            setSelectedAreaValue(area)
+                            setIsDropdownOpen(false)
+                          }}
+                          className={cn(
+                            'flex w-full items-center justify-between px-4 py-3 text-left text-sm transition-colors',
+                            selectedAreaValue === area
+                              ? 'bg-[#C1121F]/10 text-[#C1121F] font-medium'
+                              : 'text-gray-700 hover:bg-gray-50'
+                          )}
+                        >
+                          {area}
+                          {selectedAreaValue === area && (
+                            <div className="h-2 w-2 rounded-full bg-[#C1121F]" />
+                          )}
+                        </button>
+                      ))}
+                    </motion.div>
                   )}
-                >
-                  <div className={cn(
-                    'flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full',
-                    localBranch === branch.id ? 'bg-[#FCA311]/30' : 'bg-white/10'
-                  )}>
-                    <Store className={cn('h-5 w-5', localBranch === branch.id ? 'text-[#FCA311]' : 'text-white/60')} />
-                  </div>
-                  <div>
-                    <p className={cn('text-sm font-semibold', localBranch === branch.id ? 'text-[#FCA311]' : 'text-white')}>
-                      {branch.name}
-                    </p>
-                    <p className="mt-0.5 text-xs text-white/50">{branch.address}</p>
-                  </div>
-                </button>
-              ))}
-            </div>
-            <button
-              onClick={handleContinue}
-              disabled={!localBranch}
-              className="w-full rounded-xl bg-[#FCA311] py-3.5 text-sm font-semibold text-[#1a1a1a] transition-all hover:bg-[#FCA311]/90 disabled:opacity-40 disabled:cursor-not-allowed"
+                </AnimatePresence>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Branch Selection for Takeaway */}
+        <AnimatePresence mode="wait">
+          {orderMode === 'takeaway' && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.3 }}
+              className="mb-6"
             >
-              Continue
-            </button>
-          </div>
-        )}
-      </div>
+              <label className="mb-2 block text-sm font-medium text-[#1a1a1a]">
+                Select branch for pickup
+              </label>
+              <div className="space-y-3">
+                {branches.map((branch) => (
+                  <button
+                    key={branch.id}
+                    onClick={() => setSelectedBranchValue(branch.id)}
+                    className={cn(
+                      'flex w-full items-center gap-4 rounded-2xl border-2 bg-white p-4 text-left transition-all',
+                      selectedBranchValue === branch.id
+                        ? 'border-[#C1121F] bg-[#C1121F]/5 shadow-lg'
+                        : 'border-gray-200 hover:border-gray-300 hover:shadow-md'
+                    )}
+                  >
+                    <div className={cn(
+                      'flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl transition-colors',
+                      selectedBranchValue === branch.id
+                        ? 'bg-[#C1121F]'
+                        : 'bg-gray-100'
+                    )}>
+                      <Store className={cn(
+                        'h-6 w-6',
+                        selectedBranchValue === branch.id ? 'text-white' : 'text-gray-500'
+                      )} />
+                    </div>
+                    <div className="flex-1">
+                      <p className={cn(
+                        'font-semibold',
+                        selectedBranchValue === branch.id ? 'text-[#1a1a1a]' : 'text-gray-700'
+                      )}>
+                        {branch.name}
+                      </p>
+                      <p className="text-sm text-gray-500">{branch.address}</p>
+                    </div>
+                    {selectedBranchValue === branch.id && (
+                      <div className="h-3 w-3 rounded-full bg-[#C1121F]" />
+                    )}
+                  </button>
+                ))}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Continue Button */}
+        <motion.button
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.4 }}
+          onClick={handleContinue}
+          disabled={!canContinue}
+          className={cn(
+            'w-full rounded-2xl py-4 text-lg font-semibold text-white transition-all',
+            canContinue
+              ? 'bg-[#C1121F] hover:bg-[#a00f1a] shadow-lg hover:shadow-xl active:scale-[0.98]'
+              : 'bg-gray-300 cursor-not-allowed'
+          )}
+        >
+          Continue
+        </motion.button>
+
+        {/* Footer text */}
+        <motion.p 
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.5, delay: 0.5 }}
+          className="mt-6 text-center text-xs text-gray-500"
+        >
+          Original Taste Since 2020
+        </motion.p>
+      </motion.div>
     </div>
   )
 }
