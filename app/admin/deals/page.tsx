@@ -11,6 +11,7 @@ import {
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
+import { setStorageWithSync } from '@/lib/storage-sync'
 
 interface Deal {
   id: string
@@ -49,7 +50,7 @@ export default function AdminDealsPage() {
             price: deal.fixed_price || 0,
             image: deal.image_url || '/images/deals.jpg',
           }))
-        localStorage.setItem('deals', JSON.stringify(dealsForStorage))
+        setStorageWithSync('deals', JSON.stringify(dealsForStorage))
       }
     } catch (error) {
       console.error('Error fetching deals:', error)
@@ -80,7 +81,7 @@ export default function AdminDealsPage() {
       )
       setDeals(updatedDeals)
 
-      // Sync to localStorage
+      // Sync to localStorage with event dispatch
       const dealsForStorage = updatedDeals
         .filter(deal => deal.is_active)
         .map(deal => ({
@@ -91,7 +92,7 @@ export default function AdminDealsPage() {
           price: deal.fixed_price || 0,
           image: deal.image_url || '/images/deals.jpg',
         }))
-      localStorage.setItem('deals', JSON.stringify(dealsForStorage))
+      setStorageWithSync('deals', JSON.stringify(dealsForStorage))
 
       toast.success(`Deal ${!currentStatus ? 'activated' : 'deactivated'}`)
     } catch {

@@ -45,26 +45,28 @@ export function MenuSection({ onItemClick }: MenuSectionProps) {
             setMenuItems(convertedProducts)
           }
         } catch (error) {
-          console.error('Error loading products from localStorage:', error)
+          console.error('[v0] Error loading products from localStorage:', error)
         }
       }
     }
     
     loadProducts()
     
-    // Listen for storage changes (when admin updates products in another tab)
-    window.addEventListener('storage', loadProducts)
+    // Listen for storage changes - both from other tabs and same-tab sync
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'products' || e.key === null) {
+        loadProducts()
+      }
+    }
+    
+    window.addEventListener('storage', handleStorageChange)
     
     // Also reload when window gets focus (same tab scenario)
     window.addEventListener('focus', loadProducts)
     
-    // Set up interval to check for updates every 5 seconds
-    const interval = setInterval(loadProducts, 5000)
-    
     return () => {
-      window.removeEventListener('storage', loadProducts)
+      window.removeEventListener('storage', handleStorageChange)
       window.removeEventListener('focus', loadProducts)
-      clearInterval(interval)
     }
   }, [])
 

@@ -24,16 +24,29 @@ export function Promotions({ onDealClick }: PromotionsProps) {
             setDeals(parsedDeals)
           }
         } catch (error) {
-          console.error('Error loading deals from localStorage:', error)
+          console.error('[v0] Error loading deals from localStorage:', error)
         }
       }
     }
     
     loadDeals()
     
-    // Listen for storage changes
-    window.addEventListener('storage', loadDeals)
-    return () => window.removeEventListener('storage', loadDeals)
+    // Listen for storage changes - both from other tabs and same-tab sync
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'deals' || e.key === null) {
+        loadDeals()
+      }
+    }
+    
+    window.addEventListener('storage', handleStorageChange)
+    
+    // Also reload when window gets focus
+    window.addEventListener('focus', loadDeals)
+    
+    return () => {
+      window.removeEventListener('storage', handleStorageChange)
+      window.removeEventListener('focus', loadDeals)
+    }
   }, [])
 
   if (deals.length === 0) {

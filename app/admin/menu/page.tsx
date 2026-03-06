@@ -17,6 +17,7 @@ import {
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
+import { setStorageWithSync } from '@/lib/storage-sync'
 
 interface Category {
   id: string
@@ -92,7 +93,7 @@ export default function AdminMenuPage() {
           is_available: item.is_available,
           rating: 4.5,
         }))
-        localStorage.setItem('products', JSON.stringify(productsForStorage))
+        setStorageWithSync('products', JSON.stringify(productsForStorage))
       }
     } catch (error) {
       console.error('Error fetching menu:', error)
@@ -118,9 +119,25 @@ export default function AdminMenuPage() {
       const data = await response.json()
       if (data.error) throw new Error(data.error)
 
-      setItems(prev => prev.map(item => 
+      const updatedItems = items.map(item => 
         item.id === id ? { ...item, is_available: !currentStatus } : item
-      ))
+      )
+      setItems(updatedItems)
+
+      // Sync updated items to localStorage
+      const productsForStorage = updatedItems.map(item => ({
+        id: item.id,
+        name: item.name,
+        description: item.description,
+        price: item.price,
+        category: item.category?.name || item.category_id,
+        category_id: item.category_id,
+        image: item.image_url || '/images/placeholder.jpg',
+        image_url: item.image_url,
+        is_available: item.is_available,
+        rating: 4.5,
+      }))
+      setStorageWithSync('products', JSON.stringify(productsForStorage))
 
       toast.success(`Item ${!currentStatus ? 'enabled' : 'disabled'}`)
     } catch {
