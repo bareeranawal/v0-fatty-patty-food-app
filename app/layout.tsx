@@ -1,6 +1,5 @@
 import type { Metadata, Viewport } from 'next'
 import { Inter, Playfair_Display } from 'next/font/google'
-import { Analytics } from '@vercel/analytics/next'
 import { ThemeProvider } from 'next-themes'
 import { CartProvider } from '@/lib/cart-context'
 import { OrderProvider } from '@/lib/order-context'
@@ -42,7 +41,6 @@ export default function RootLayout({
             </CartProvider>
           </OrderProvider>
         </ThemeProvider>
-        <Analytics />
       </body>
     </html>
   )
