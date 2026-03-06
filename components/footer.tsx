@@ -25,7 +25,7 @@ export function Footer() {
         <div className="grid gap-10 md:grid-cols-2 lg:grid-cols-4">
           {/* Brand */}
           <div>
-            <div className="relative mb-4 h-16 w-16 flex-shrink-0 overflow-hidden rounded-full border-2 border-[#F4A261]/40">
+            <div className="relative mb-4 h-16 w-16 flex-shrink-0 overflow-hidden rounded-full border-2 border-[#FCA311]/40">
               <Image
                 src="/images/logo.png"
                 alt="Fatty Patty"
@@ -81,7 +81,7 @@ export function Footer() {
             <ul className="space-y-3">
               {quickLinks.map((link) => (
                 <li key={link.name}>
-                  <Link href={link.href} className="text-sm text-neutral-400 transition-colors hover:text-[#F4A261]">
+                  <Link href={link.href} className="text-sm text-neutral-400 transition-colors hover:text-[#FCA311]">
                     {link.name}
                   </Link>
                 </li>
@@ -95,7 +95,7 @@ export function Footer() {
             <ul className="space-y-3">
               {menuLinks.map((link) => (
                 <li key={link.name}>
-                  <Link href={link.href} className="text-sm text-neutral-400 transition-colors hover:text-[#F4A261]">
+                  <Link href={link.href} className="text-sm text-neutral-400 transition-colors hover:text-[#FCA311]">
                     {link.name}
                   </Link>
                 </li>
@@ -116,13 +116,13 @@ export function Footer() {
               </li>
               <li className="flex items-center gap-3">
                 <Phone className="h-4 w-4 flex-shrink-0 text-[#C1121F]" />
-                <a href="tel:03342024000" className="text-sm text-neutral-400 hover:text-[#F4A261]">
+                <a href="tel:03342024000" className="text-sm text-neutral-400 hover:text-[#FCA311]">
                   0334 2024 000
                 </a>
               </li>
               <li className="flex items-center gap-3">
                 <Mail className="h-4 w-4 flex-shrink-0 text-[#C1121F]" />
-                <a href="mailto:fattypatty@gmail.com" className="text-sm text-neutral-400 hover:text-[#F4A261]">
+                <a href="mailto:fattypatty@gmail.com" className="text-sm text-neutral-400 hover:text-[#FCA311]">
                   fattypatty@gmail.com
                 </a>
               </li>

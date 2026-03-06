@@ -1,13 +1,16 @@
 import type { Metadata, Viewport } from 'next'
-import { Inter, Playfair_Display } from 'next/font/google'
+import { Inter, Poppins } from 'next/font/google'
 import { ThemeProvider } from 'next-themes'
 import { CartProvider } from '@/lib/cart-context'
 import { OrderProvider } from '@/lib/order-context'
+import { UserProvider } from '@/lib/user-context'
+import { AdminProvider } from '@/lib/admin-context'
+import { WhatsAppButton } from '@/components/whatsapp-button'
 import { Toaster } from 'sonner'
 import './globals.css'
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' })
-const playfair = Playfair_Display({ subsets: ['latin'], variable: '--font-playfair' })
+const poppins = Poppins({ subsets: ['latin'], weight: ['400', '500', '600', '700', '800'], variable: '--font-poppins' })
 
 export const metadata: Metadata = {
   title: 'Fatty Patty | Original Taste - Premium Burgers Since 2020',
@@ -31,14 +34,19 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en" className={`${inter.variable} ${playfair.variable}`} suppressHydrationWarning>
+    <html lang="en" className={`${inter.variable} ${poppins.variable}`} suppressHydrationWarning>
       <body className="font-sans antialiased">
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false}>
           <OrderProvider>
-            <CartProvider>
-              {children}
-              <Toaster position="bottom-right" richColors />
-            </CartProvider>
+            <UserProvider>
+              <AdminProvider>
+                <CartProvider>
+                  {children}
+                  <WhatsAppButton />
+                  <Toaster position="bottom-right" richColors />
+                </CartProvider>
+              </AdminProvider>
+            </UserProvider>
           </OrderProvider>
         </ThemeProvider>
       </body>

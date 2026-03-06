@@ -121,11 +121,11 @@ export function MenuSection({ onItemClick }: MenuSectionProps) {
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-[#1a1a1a]/40 via-transparent to-transparent" />
                       <div className="absolute right-3 top-3 flex items-center gap-1 rounded-full bg-[#1a1a1a]/70 px-2 py-0.5 backdrop-blur-sm">
-                        <Star className="h-3 w-3 fill-[#F4A261] text-[#F4A261]" />
+                        <Star className="h-3 w-3 fill-[#FCA311] text-[#FCA311]" />
                         <span className="text-xs font-semibold text-white">{item.rating}</span>
                       </div>
                       {item.popular && (
-                        <span className="absolute left-3 top-3 rounded-full bg-[#F4A261] px-2.5 py-0.5 text-xs font-bold text-[#1a1a1a]">
+                        <span className="absolute left-3 top-3 rounded-full bg-[#FCA311] px-2.5 py-0.5 text-xs font-bold text-[#1a1a1a]">
                           Best Seller
                         </span>
                       )}

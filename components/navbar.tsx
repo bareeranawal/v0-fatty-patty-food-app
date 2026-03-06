@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useMemo, useCallback } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useRouter, usePathname } from 'next/navigation'
-import { Search, ShoppingBag, Menu, X, Info, Sun, Moon, MapPin, Store } from 'lucide-react'
+import { Search, ShoppingBag, Menu, X, Info, Sun, Moon, MapPin, Store, User } from 'lucide-react'
 import { useTheme } from 'next-themes'
 import { useCart } from '@/lib/cart-context'
 import { useOrder } from '@/lib/order-context'
@@ -154,7 +154,7 @@ export function Navbar({ onItemClick }: NavbarProps) {
           {/* Left: Logo + Delivery/Pickup Toggle */}
           <div className="flex items-center gap-3 flex-shrink-0">
             <Link href="/" className="flex items-center gap-2.5 flex-shrink-0">
-              <div className="relative h-10 w-10 flex-shrink-0 overflow-hidden rounded-full border-2 border-[#F4A261]/40">
+              <div className="relative h-10 w-10 flex-shrink-0 overflow-hidden rounded-full border-2 border-[#FCA311]/40">
                 <Image
                   src="/images/logo.png"
                   alt="Fatty Patty"
@@ -206,7 +206,7 @@ export function Navbar({ onItemClick }: NavbarProps) {
               <button
                 key={link.name}
                 onClick={(e) => handleNavClick(link, e)}
-                className="text-sm font-medium tracking-wide text-white/80 transition-colors hover:text-[#F4A261]"
+                className="text-sm font-medium tracking-wide text-white/80 transition-colors hover:text-[#FCA311]"
               >
                 {link.name}
               </button>
@@ -298,11 +298,20 @@ export function Navbar({ onItemClick }: NavbarProps) {
             >
               <ShoppingBag className="h-5 w-5" />
               {totalItems > 0 && (
-                <span className="absolute -right-0.5 -top-0.5 flex h-5 w-5 items-center justify-center rounded-full bg-[#F4A261] text-xs font-bold text-[#1a1a1a]">
+                <span className="absolute -right-0.5 -top-0.5 flex h-5 w-5 items-center justify-center rounded-full bg-[#FCA311] text-xs font-bold text-[#1a1a1a]">
                   {totalItems}
                 </span>
               )}
             </button>
+
+            {/* Profile */}
+            <Link
+              href="/profile"
+              className="hidden rounded-full p-2 text-white/80 transition-colors hover:bg-white/10 hover:text-white sm:block"
+              aria-label="Profile"
+            >
+              <User className="h-5 w-5" />
+            </Link>
 
             {/* Mobile Menu Toggle */}
             <button
@@ -356,6 +365,16 @@ export function Navbar({ onItemClick }: NavbarProps) {
                 {link.name}
               </button>
             ))}
+            
+            {/* Mobile Profile Link */}
+            <Link
+              href="/profile"
+              onClick={() => setIsMobileMenuOpen(false)}
+              className="flex items-center gap-2 rounded-lg px-4 py-2.5 text-left text-sm font-medium text-white/80 transition-colors hover:bg-white/10 hover:text-white"
+            >
+              <User className="h-4 w-4" />
+              My Account
+            </Link>
           </div>
         </div>
       </nav>
@@ -381,7 +400,7 @@ export function Navbar({ onItemClick }: NavbarProps) {
               <X className="h-4 w-4" />
             </button>
             <div className="bg-[#C1121F] px-8 pb-6 pt-8 text-center">
-              <div className="mx-auto mb-4 h-20 w-20 overflow-hidden rounded-full border-3 border-[#F4A261]/40">
+              <div className="mx-auto mb-4 h-20 w-20 overflow-hidden rounded-full border-3 border-[#FCA311]/40">
                 <Image
                   src="/images/logo.png"
                   alt="Fatty Patty"

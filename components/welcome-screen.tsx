@@ -45,7 +45,7 @@ export function WelcomeScreen() {
       <div className="relative w-full max-w-md animate-fade-in-up">
         {/* Logo */}
         <div className="mb-8 flex flex-col items-center">
-          <div className="mb-4 h-24 w-24 overflow-hidden rounded-full border-3 border-[#F4A261]/50 shadow-2xl">
+          <div className="mb-4 h-24 w-24 overflow-hidden rounded-full border-3 border-[#FCA311]/50 shadow-2xl">
             <Image
               src="/images/logo.png"
               alt="Fatty Patty"
@@ -66,20 +66,20 @@ export function WelcomeScreen() {
             <div className="grid grid-cols-2 gap-4">
               <button
                 onClick={() => handleSelectType('delivery')}
-                className="group flex flex-col items-center gap-3 rounded-2xl border-2 border-white/10 bg-white/5 p-6 backdrop-blur-sm transition-all hover:border-[#F4A261]/50 hover:bg-white/10"
+                className="group flex flex-col items-center gap-3 rounded-2xl border-2 border-white/10 bg-white/5 p-6 backdrop-blur-sm transition-all hover:border-[#FCA311]/50 hover:bg-white/10"
               >
-                <div className="flex h-14 w-14 items-center justify-center rounded-full bg-[#F4A261]/20">
-                  <MapPin className="h-7 w-7 text-[#F4A261]" />
+                <div className="flex h-14 w-14 items-center justify-center rounded-full bg-[#FCA311]/20">
+                  <MapPin className="h-7 w-7 text-[#FCA311]" />
                 </div>
                 <span className="text-base font-semibold text-white">Delivery</span>
                 <span className="text-xs text-white/50">To your doorstep</span>
               </button>
               <button
                 onClick={() => handleSelectType('pickup')}
-                className="group flex flex-col items-center gap-3 rounded-2xl border-2 border-white/10 bg-white/5 p-6 backdrop-blur-sm transition-all hover:border-[#F4A261]/50 hover:bg-white/10"
+                className="group flex flex-col items-center gap-3 rounded-2xl border-2 border-white/10 bg-white/5 p-6 backdrop-blur-sm transition-all hover:border-[#FCA311]/50 hover:bg-white/10"
               >
-                <div className="flex h-14 w-14 items-center justify-center rounded-full bg-[#F4A261]/20">
-                  <Store className="h-7 w-7 text-[#F4A261]" />
+                <div className="flex h-14 w-14 items-center justify-center rounded-full bg-[#FCA311]/20">
+                  <Store className="h-7 w-7 text-[#FCA311]" />
                 </div>
                 <span className="text-base font-semibold text-white">Pickup</span>
                 <span className="text-xs text-white/50">From our branch</span>
@@ -108,13 +108,13 @@ export function WelcomeScreen() {
                   className={cn(
                     'flex w-full items-center justify-between px-4 py-3 text-left text-sm transition-all border-b border-white/5 last:border-0',
                     localArea === area
-                      ? 'bg-[#F4A261]/20 text-[#F4A261] font-medium'
+                      ? 'bg-[#FCA311]/20 text-[#FCA311] font-medium'
                       : 'text-white/80 hover:bg-white/5'
                   )}
                 >
                   <span>{area}</span>
                   {localArea === area && (
-                    <div className="h-2 w-2 rounded-full bg-[#F4A261]" />
+                    <div className="h-2 w-2 rounded-full bg-[#FCA311]" />
                   )}
                 </button>
               ))}
@@ -122,7 +122,7 @@ export function WelcomeScreen() {
             <button
               onClick={handleContinue}
               disabled={!localArea}
-              className="w-full rounded-xl bg-[#F4A261] py-3.5 text-sm font-semibold text-[#1a1a1a] transition-all hover:bg-[#F4A261]/90 disabled:opacity-40 disabled:cursor-not-allowed"
+              className="w-full rounded-xl bg-[#FCA311] py-3.5 text-sm font-semibold text-[#1a1a1a] transition-all hover:bg-[#FCA311]/90 disabled:opacity-40 disabled:cursor-not-allowed"
             >
               Continue
             </button>
@@ -148,18 +148,18 @@ export function WelcomeScreen() {
                   className={cn(
                     'flex w-full items-start gap-4 rounded-2xl border-2 p-5 text-left transition-all',
                     localBranch === branch.id
-                      ? 'border-[#F4A261] bg-[#F4A261]/10'
+                      ? 'border-[#FCA311] bg-[#FCA311]/10'
                       : 'border-white/10 bg-white/5 hover:border-white/20'
                   )}
                 >
                   <div className={cn(
                     'flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full',
-                    localBranch === branch.id ? 'bg-[#F4A261]/30' : 'bg-white/10'
+                    localBranch === branch.id ? 'bg-[#FCA311]/30' : 'bg-white/10'
                   )}>
-                    <Store className={cn('h-5 w-5', localBranch === branch.id ? 'text-[#F4A261]' : 'text-white/60')} />
+                    <Store className={cn('h-5 w-5', localBranch === branch.id ? 'text-[#FCA311]' : 'text-white/60')} />
                   </div>
                   <div>
-                    <p className={cn('text-sm font-semibold', localBranch === branch.id ? 'text-[#F4A261]' : 'text-white')}>
+                    <p className={cn('text-sm font-semibold', localBranch === branch.id ? 'text-[#FCA311]' : 'text-white')}>
                       {branch.name}
                     </p>
                     <p className="mt-0.5 text-xs text-white/50">{branch.address}</p>
@@ -170,7 +170,7 @@ export function WelcomeScreen() {
             <button
               onClick={handleContinue}
               disabled={!localBranch}
-              className="w-full rounded-xl bg-[#F4A261] py-3.5 text-sm font-semibold text-[#1a1a1a] transition-all hover:bg-[#F4A261]/90 disabled:opacity-40 disabled:cursor-not-allowed"
+              className="w-full rounded-xl bg-[#FCA311] py-3.5 text-sm font-semibold text-[#1a1a1a] transition-all hover:bg-[#FCA311]/90 disabled:opacity-40 disabled:cursor-not-allowed"
             >
               Continue
             </button>

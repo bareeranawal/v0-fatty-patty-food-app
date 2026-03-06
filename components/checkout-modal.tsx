@@ -1,13 +1,61 @@
 "use client"
 
 import { useState } from 'react'
-import { X, CheckCircle2 } from 'lucide-react'
+import { X, CheckCircle2, MessageCircle } from 'lucide-react'
 import { useCart } from '@/lib/cart-context'
 import { useOrder, deliveryAreas, branches } from '@/lib/order-context'
 import { toast } from 'sonner'
 
 interface CheckoutModalProps {
   onClose: () => void
+}
+
+const WHATSAPP_NUMBER = '923342024000'
+
+function generateWhatsAppMessage(
+  items: { name: string; quantity: number; price: number; addOns?: string[] }[],
+  total: number,
+  orderType: string,
+  customerInfo: {
+    fullName: string
+    phone: string
+    address?: string
+    area?: string
+    branch?: string
+    notes?: string
+  }
+) {
+  let message = `*New Order - Fatty Patty*\n\n`
+  message += `*Order Type:* ${orderType === 'delivery' ? 'Delivery' : 'Pickup'}\n`
+  
+  if (orderType === 'delivery' && customerInfo.area) {
+    message += `*Area:* ${customerInfo.area}\n`
+  } else if (orderType === 'pickup' && customerInfo.branch) {
+    message += `*Branch:* ${customerInfo.branch}\n`
+  }
+  
+  message += `\n*Items:*\n`
+  items.forEach((item) => {
+    message += `${item.quantity}x ${item.name} - Rs. ${item.price.toLocaleString()}\n`
+    if (item.addOns && item.addOns.length > 0) {
+      message += `   + ${item.addOns.join(', ')}\n`
+    }
+  })
+  
+  message += `\n*Total:* Rs. ${total.toLocaleString()}\n\n`
+  message += `*Customer Details:*\n`
+  message += `Name: ${customerInfo.fullName}\n`
+  message += `Phone: ${customerInfo.phone}\n`
+  
+  if (orderType === 'delivery' && customerInfo.address) {
+    message += `Address: ${customerInfo.address}\n`
+  }
+  
+  if (customerInfo.notes) {
+    message += `\n*Special Instructions:*\n${customerInfo.notes}\n`
+  }
+  
+  return encodeURIComponent(message)
 }
 
 export function CheckoutModal({ onClose }: CheckoutModalProps) {
@@ -37,45 +85,74 @@ export function CheckoutModal({ onClose }: CheckoutModalProps) {
       toast.error('Please select a delivery area')
       return
     }
+    if (formData.orderType === 'pickup' && !formData.branch) {
+      toast.error('Please select a pickup branch')
+      return
+    }
     setIsSubmitting(true)
 
     try {
       // Simulate order processing
-      await new Promise((resolve) => setTimeout(resolve, 1500))
+      await new Promise((resolve) => setTimeout(resolve, 1000))
 
       const newOrderId = `FP-${Date.now().toString(36).toUpperCase()}`
 
-      // Send confirmation email
-      const emailItems = items.map((item) => {
+      // Prepare items for WhatsApp message
+      const orderItems = items.map((item) => {
         const addOnTotal = item.addOns.reduce((sum, a) => sum + a.price, 0)
         return {
           name: item.menuItem.name,
           quantity: item.quantity,
           price: (item.menuItem.price + addOnTotal) * item.quantity,
+          addOns: item.addOns.map(a => a.name),
         }
       })
 
-      await fetch('/api/send-confirmation', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          customerName: formData.fullName,
-          email: formData.email,
-          orderId: newOrderId,
-          items: emailItems,
-          total,
-          orderType: formData.orderType,
-          estimatedTime,
+      // Generate WhatsApp message
+      const branchName = formData.branch ? branches.find(b => b.id === formData.branch)?.name : ''
+      const whatsappMessage = generateWhatsAppMessage(
+        orderItems,
+        total,
+        formData.orderType,
+        {
+          fullName: formData.fullName,
+          phone: formData.phone,
+          address: formData.address,
           area: formData.area,
-          branch: formData.branch ? branches.find(b => b.id === formData.branch)?.name : '',
-        }),
-      })
+          branch: branchName || '',
+          notes: formData.notes,
+        }
+      )
+
+      // Open WhatsApp in new tab
+      const whatsappUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${whatsappMessage}`
+      window.open(whatsappUrl, '_blank')
+
+      // Send confirmation email (optional)
+      try {
+        await fetch('/api/send-confirmation', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            customerName: formData.fullName,
+            email: formData.email,
+            orderId: newOrderId,
+            items: orderItems,
+            total,
+            orderType: formData.orderType,
+            estimatedTime,
+            area: formData.area,
+            branch: branchName,
+          }),
+        })
+      } catch {
+        // Email is optional, don't fail the order
+      }
 
       setOrderId(newOrderId)
       setOrderPlaced(true)
-      // Clear cart ONLY after successful order
       clearCart()
-      toast.success('Order placed successfully!')
+      toast.success('Order sent to WhatsApp!')
     } catch {
       toast.error('Something went wrong. Please try again.')
     } finally {
@@ -94,9 +171,9 @@ export function CheckoutModal({ onClose }: CheckoutModalProps) {
           <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-green-100">
             <CheckCircle2 className="h-8 w-8 text-green-600" />
           </div>
-          <h2 className="mb-2 text-2xl font-bold text-foreground">Order Placed!</h2>
+          <h2 className="mb-2 font-serif text-2xl font-bold text-foreground">Order Sent!</h2>
           <p className="mb-1 text-sm text-muted-foreground">
-            Your order has been placed successfully.
+            Your order has been sent to our WhatsApp.
           </p>
           <p className="mb-2 text-sm font-medium text-foreground">
             Order ID: <span className="text-[#C1121F]">{orderId}</span>
@@ -105,14 +182,25 @@ export function CheckoutModal({ onClose }: CheckoutModalProps) {
             Estimated Time: <span className="font-medium text-foreground">{estimatedTime}</span>
           </p>
           <p className="mb-6 text-xs text-muted-foreground">
-            A confirmation email has been sent to your email with the order details.
+            Please complete your order on WhatsApp. Our team will confirm shortly.
           </p>
-          <button
-            onClick={onClose}
-            className="w-full rounded-xl bg-[#C1121F] py-3 text-sm font-semibold text-white transition-all hover:bg-[#C1121F]/90"
-          >
-            Done
-          </button>
+          <div className="flex gap-3">
+            <a
+              href={`https://wa.me/${WHATSAPP_NUMBER}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-[#25D366] py-3 text-sm font-semibold text-white transition-all hover:bg-[#25D366]/90"
+            >
+              <MessageCircle className="h-4 w-4" />
+              Open WhatsApp
+            </a>
+            <button
+              onClick={onClose}
+              className="flex-1 rounded-xl bg-[#C1121F] py-3 text-sm font-semibold text-white transition-all hover:bg-[#C1121F]/90"
+            >
+              Done
+            </button>
+          </div>
         </div>
       </div>
     )
@@ -122,7 +210,13 @@ export function CheckoutModal({ onClose }: CheckoutModalProps) {
     <div className="fixed inset-0 z-[60] flex items-start justify-center overflow-y-auto bg-[#1a1a1a]/50 p-4 backdrop-blur-sm">
       <div className="my-8 w-full max-w-2xl rounded-2xl bg-card shadow-2xl animate-fade-in-up">
         <div className="flex items-center justify-between border-b border-border p-5">
-          <h2 className="text-lg font-bold text-foreground">Checkout</h2>
+          <div className="flex items-center gap-3">
+            <h2 className="font-serif text-lg font-bold text-foreground">Checkout</h2>
+            <span className="flex items-center gap-1.5 rounded-full bg-[#25D366]/10 px-3 py-1 text-xs font-medium text-[#25D366]">
+              <MessageCircle className="h-3 w-3" />
+              via WhatsApp
+            </span>
+          </div>
           <button
             onClick={onClose}
             className="rounded-full p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
@@ -149,8 +243,7 @@ export function CheckoutModal({ onClose }: CheckoutModalProps) {
                   />
                   <input
                     type="email"
-                    required
-                    placeholder="Email Address"
+                    placeholder="Email Address (optional)"
                     value={formData.email}
                     onChange={(e) => updateField('email', e.target.value)}
                     className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-[#C1121F] focus:outline-none focus:ring-2 focus:ring-[#C1121F]/20"
@@ -304,9 +397,10 @@ export function CheckoutModal({ onClose }: CheckoutModalProps) {
           <button
             type="submit"
             disabled={isSubmitting}
-            className="mt-6 w-full rounded-xl bg-[#C1121F] py-3.5 text-sm font-semibold text-white transition-all hover:bg-[#C1121F]/90 disabled:opacity-50 active:scale-[0.98]"
+            className="mt-6 flex w-full items-center justify-center gap-2 rounded-xl bg-[#25D366] py-3.5 text-sm font-semibold text-white transition-all hover:bg-[#25D366]/90 disabled:opacity-50 active:scale-[0.98]"
           >
-            {isSubmitting ? 'Placing Order...' : `Place Order - Rs. ${total.toLocaleString()}`}
+            <MessageCircle className="h-4 w-4" />
+            {isSubmitting ? 'Processing...' : `Order via WhatsApp - Rs. ${total.toLocaleString()}`}
           </button>
         </form>
       </div>

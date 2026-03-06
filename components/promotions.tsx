@@ -37,7 +37,7 @@ export function Promotions({ onDealClick }: PromotionsProps) {
                   className="object-cover transition-transform duration-500 group-hover:scale-110"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-[#1a1a1a]/70 via-[#1a1a1a]/20 to-transparent" />
-                <div className="absolute left-4 top-4 flex items-center gap-1.5 rounded-full bg-[#F4A261] px-3 py-1">
+                <div className="absolute left-4 top-4 flex items-center gap-1.5 rounded-full bg-[#FCA311] px-3 py-1">
                   <Flame className="h-3.5 w-3.5 text-[#1a1a1a]" />
                   <span className="text-xs font-bold text-[#1a1a1a]">{deal.name}</span>
                 </div>

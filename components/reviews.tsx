@@ -98,7 +98,7 @@ export function Reviews() {
                           key={i}
                           className={`h-3.5 w-3.5 ${
                             i < review.rating
-                              ? 'fill-[#F4A261] text-[#F4A261]'
+                              ? 'fill-[#FCA311] text-[#FCA311]'
                               : 'fill-muted text-muted'
                           }`}
                         />
