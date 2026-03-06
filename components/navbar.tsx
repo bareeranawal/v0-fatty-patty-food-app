@@ -4,23 +4,7 @@ import { useState, useEffect, useRef, useMemo, useCallback } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useRouter, usePathname } from 'next/navigation'
-import { motion, AnimatePresence } from 'framer-motion'
-import { 
-  Search, 
-  ShoppingBag, 
-  Menu, 
-  X, 
-  Info, 
-  Sun, 
-  Moon, 
-  MapPin, 
-  Store, 
-  User, 
-  Settings,
-  LogOut,
-  ClipboardList,
-  LayoutDashboard
-} from 'lucide-react'
+import { Search, ShoppingBag, Menu, X, Info, Sun, Moon, MapPin, Store } from 'lucide-react'
 import { useTheme } from 'next-themes'
 import { useCart } from '@/lib/cart-context'
 import { useOrder } from '@/lib/order-context'
@@ -53,14 +37,12 @@ export function Navbar({ onItemClick }: NavbarProps) {
   const [isSearchOpen, setIsSearchOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const [showAbout, setShowAbout] = useState(false)
-  const [showProfileMenu, setShowProfileMenu] = useState(false)
   const { totalItems, setIsCartOpen } = useCart()
   const { orderType, setOrderType } = useOrder()
   const { theme, setTheme } = useTheme()
   const [mounted, setMounted] = useState(false)
   const searchInputRef = useRef<HTMLInputElement>(null)
   const searchContainerRef = useRef<HTMLDivElement>(null)
-  const profileMenuRef = useRef<HTMLDivElement>(null)
   const router = useRouter()
   const pathname = usePathname()
 
@@ -82,15 +64,10 @@ export function Navbar({ onItemClick }: NavbarProps) {
         setIsSearchOpen(false)
         setSearchQuery('')
       }
-      if (profileMenuRef.current && !profileMenuRef.current.contains(e.target as Node)) {
-        setShowProfileMenu(false)
-      }
     }
-    if (isSearchOpen || showProfileMenu) {
-      document.addEventListener('mousedown', handleClickOutside)
-    }
+    if (isSearchOpen) document.addEventListener('mousedown', handleClickOutside)
     return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [isSearchOpen, showProfileMenu])
+  }, [isSearchOpen])
 
   const searchResults = useMemo(() => {
     if (!searchQuery.trim()) return []
@@ -165,10 +142,7 @@ export function Navbar({ onItemClick }: NavbarProps) {
 
   return (
     <>
-      <motion.nav
-        initial={{ y: -100 }}
-        animate={{ y: 0 }}
-        transition={{ type: "spring", stiffness: 300, damping: 30 }}
+      <nav
         className={cn(
           'fixed top-0 left-0 right-0 z-50 transition-all duration-300',
           isScrolled
@@ -179,8 +153,8 @@ export function Navbar({ onItemClick }: NavbarProps) {
         <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-2 lg:px-8">
           {/* Left: Logo + Delivery/Pickup Toggle */}
           <div className="flex items-center gap-3 flex-shrink-0">
-            <Link href="/" className="flex items-center gap-2.5 flex-shrink-0 logo-glow">
-              <div className="relative h-10 w-10 flex-shrink-0 overflow-hidden rounded-full border-2 border-[#FCA311]/40">
+            <Link href="/" className="flex items-center gap-2.5 flex-shrink-0">
+              <div className="relative h-10 w-10 flex-shrink-0 overflow-hidden rounded-full border-2 border-[#F4A261]/40">
                 <Image
                   src="/images/logo.png"
                   alt="Fatty Patty"
@@ -232,18 +206,9 @@ export function Navbar({ onItemClick }: NavbarProps) {
               <button
                 key={link.name}
                 onClick={(e) => handleNavClick(link, e)}
-                className={cn(
-                  "relative text-sm font-medium tracking-wide text-white/80 transition-colors hover:text-[#FCA311]",
-                  pathname === link.href && "text-[#FCA311]"
-                )}
+                className="text-sm font-medium tracking-wide text-white/80 transition-colors hover:text-[#F4A261]"
               >
                 {link.name}
-                {pathname === link.href && (
-                  <motion.div 
-                    className="absolute -bottom-1 left-0 right-0 h-0.5 bg-[#FCA311] rounded-full"
-                    layoutId="navbar-indicator"
-                  />
-                )}
               </button>
             ))}
           </div>
@@ -252,331 +217,197 @@ export function Navbar({ onItemClick }: NavbarProps) {
           <div className="flex items-center gap-1.5">
             {/* Theme Toggle */}
             {mounted && (
-              <motion.button
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.9 }}
+              <button
                 onClick={toggleTheme}
                 className="rounded-full p-2 text-white/80 transition-colors hover:bg-white/10 hover:text-white"
                 aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
               >
                 {theme === 'dark' ? <Sun className="h-4.5 w-4.5" /> : <Moon className="h-4.5 w-4.5" />}
-              </motion.button>
+              </button>
             )}
 
             {/* Search */}
             <div ref={searchContainerRef} className="relative">
-              <AnimatePresence>
-                {isSearchOpen ? (
-                  <motion.div 
-                    className="flex items-center"
-                    initial={{ width: 40, opacity: 0 }}
-                    animate={{ width: "auto", opacity: 1 }}
-                    exit={{ width: 40, opacity: 0 }}
+              {isSearchOpen ? (
+                <div className="flex items-center">
+                  <input
+                    ref={searchInputRef}
+                    type="text"
+                    placeholder="Search menu..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Escape') { setIsSearchOpen(false); setSearchQuery('') }
+                    }}
+                    className="w-40 rounded-full bg-white/15 px-4 py-1.5 text-sm text-white placeholder:text-white/50 focus:bg-white/20 focus:outline-none sm:w-52"
+                  />
+                  <button
+                    onClick={() => { setIsSearchOpen(false); setSearchQuery('') }}
+                    className="ml-1 rounded-full p-1.5 text-white/80 hover:text-white"
+                    aria-label="Close search"
                   >
-                    <input
-                      ref={searchInputRef}
-                      type="text"
-                      placeholder="Search menu..."
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Escape') { setIsSearchOpen(false); setSearchQuery('') }
-                      }}
-                      className="w-40 rounded-full bg-white/15 px-4 py-1.5 text-sm text-white placeholder:text-white/50 focus:bg-white/20 focus:outline-none sm:w-52"
-                    />
-                    <button
-                      onClick={() => { setIsSearchOpen(false); setSearchQuery('') }}
-                      className="ml-1 rounded-full p-1.5 text-white/80 hover:text-white"
-                      aria-label="Close search"
-                    >
-                      <X className="h-4 w-4" />
-                    </button>
-                  </motion.div>
-                ) : (
-                  <motion.button
-                    whileHover={{ scale: 1.1 }}
-                    whileTap={{ scale: 0.9 }}
-                    onClick={() => setIsSearchOpen(true)}
-                    className="rounded-full p-2 text-white/80 transition-colors hover:bg-white/10 hover:text-white"
-                    aria-label="Search menu"
-                  >
-                    <Search className="h-5 w-5" />
-                  </motion.button>
-                )}
-              </AnimatePresence>
-              
-              {/* Search Results Dropdown */}
-              <AnimatePresence>
-                {searchQuery.trim() && isSearchOpen && (
-                  <motion.div 
-                    className="absolute right-0 top-full mt-2 w-72 overflow-hidden rounded-xl border border-border bg-card shadow-xl sm:w-80"
-                    initial={{ opacity: 0, y: -10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -10 }}
-                  >
-                    {searchResults.length > 0 ? (
-                      <div className="max-h-80 overflow-y-auto">
-                        {searchResults.map((item) => (
-                          <button
-                            key={item.id}
-                            onClick={() => handleResultClick(item)}
-                            className="flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-muted"
-                          >
-                            <div className="relative h-10 w-10 flex-shrink-0 overflow-hidden rounded-lg">
-                              <Image src={item.image} alt={item.name} fill className="object-cover" />
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <p className="text-sm font-semibold text-foreground truncate">{item.name}</p>
-                              <p className="text-xs text-muted-foreground truncate">{item.description}</p>
-                            </div>
-                            <span className="flex-shrink-0 text-sm font-bold text-[#C1121F]">
-                              Rs. {item.price.toLocaleString()}
-                            </span>
-                          </button>
-                        ))}
-                      </div>
-                    ) : (
-                      <div className="px-4 py-6 text-center">
-                        <p className="text-sm text-muted-foreground">No items found</p>
-                      </div>
-                    )}
-                  </motion.div>
-                )}
-              </AnimatePresence>
+                    <X className="h-4 w-4" />
+                  </button>
+                  {searchQuery.trim() && (
+                    <div className="absolute right-0 top-full mt-2 w-72 overflow-hidden rounded-xl border border-border bg-card shadow-xl sm:w-80">
+                      {searchResults.length > 0 ? (
+                        <div className="max-h-80 overflow-y-auto">
+                          {searchResults.map((item) => (
+                            <button
+                              key={item.id}
+                              onClick={() => handleResultClick(item)}
+                              className="flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-muted"
+                            >
+                              <div className="relative h-10 w-10 flex-shrink-0 overflow-hidden rounded-lg">
+                                <Image src={item.image} alt={item.name} fill className="object-cover" />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm font-semibold text-foreground truncate">{item.name}</p>
+                                <p className="text-xs text-muted-foreground truncate">{item.description}</p>
+                              </div>
+                              <span className="flex-shrink-0 text-sm font-bold text-[#C1121F]">
+                                Rs. {item.price.toLocaleString()}
+                              </span>
+                            </button>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="px-4 py-6 text-center">
+                          <p className="text-sm text-muted-foreground">No items found</p>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <button
+                  onClick={() => setIsSearchOpen(true)}
+                  className="rounded-full p-2 text-white/80 transition-colors hover:bg-white/10 hover:text-white"
+                  aria-label="Search menu"
+                >
+                  <Search className="h-5 w-5" />
+                </button>
+              )}
             </div>
 
             {/* Cart */}
-            <motion.button
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.9 }}
+            <button
               onClick={() => setIsCartOpen(true)}
               className="relative rounded-full p-2 text-white/80 transition-colors hover:bg-white/10 hover:text-white"
               aria-label="Shopping cart"
             >
               <ShoppingBag className="h-5 w-5" />
-              <AnimatePresence>
-                {totalItems > 0 && (
-                  <motion.span 
-                    className="absolute -right-0.5 -top-0.5 flex h-5 w-5 items-center justify-center rounded-full bg-[#FCA311] text-xs font-bold text-[#1A1A1A]"
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
-                    exit={{ scale: 0 }}
-                  >
-                    {totalItems}
-                  </motion.span>
-                )}
-              </AnimatePresence>
-            </motion.button>
-
-            {/* Profile Dropdown */}
-            <div ref={profileMenuRef} className="relative hidden sm:block">
-              <motion.button
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.9 }}
-                onClick={() => setShowProfileMenu(!showProfileMenu)}
-                className="rounded-full p-2 text-white/80 transition-colors hover:bg-white/10 hover:text-white"
-                aria-label="Profile menu"
-              >
-                <User className="h-5 w-5" />
-              </motion.button>
-              
-              <AnimatePresence>
-                {showProfileMenu && (
-                  <motion.div 
-                    className="absolute right-0 top-full mt-2 w-56 overflow-hidden rounded-xl border border-border bg-card shadow-xl"
-                    initial={{ opacity: 0, y: -10, scale: 0.95 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                    exit={{ opacity: 0, y: -10, scale: 0.95 }}
-                  >
-                    <div className="p-2">
-                      <Link
-                        href="/profile"
-                        className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-foreground transition-colors hover:bg-muted"
-                        onClick={() => setShowProfileMenu(false)}
-                      >
-                        <User className="h-4 w-4 text-muted-foreground" />
-                        My Profile
-                      </Link>
-                      <Link
-                        href="/profile/orders"
-                        className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-foreground transition-colors hover:bg-muted"
-                        onClick={() => setShowProfileMenu(false)}
-                      >
-                        <ClipboardList className="h-4 w-4 text-muted-foreground" />
-                        Order History
-                      </Link>
-                      <Link
-                        href="/profile/settings"
-                        className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-foreground transition-colors hover:bg-muted"
-                        onClick={() => setShowProfileMenu(false)}
-                      >
-                        <Settings className="h-4 w-4 text-muted-foreground" />
-                        Settings
-                      </Link>
-                    </div>
-                    <div className="border-t border-border p-2">
-                      <Link
-                        href="/admin"
-                        className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-[#C1121F] font-medium transition-colors hover:bg-[#C1121F]/10"
-                        onClick={() => setShowProfileMenu(false)}
-                      >
-                        <LayoutDashboard className="h-4 w-4" />
-                        Admin Dashboard
-                      </Link>
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
+              {totalItems > 0 && (
+                <span className="absolute -right-0.5 -top-0.5 flex h-5 w-5 items-center justify-center rounded-full bg-[#F4A261] text-xs font-bold text-[#1a1a1a]">
+                  {totalItems}
+                </span>
+              )}
+            </button>
 
             {/* Mobile Menu Toggle */}
-            <motion.button
-              whileTap={{ scale: 0.9 }}
+            <button
               className="rounded-full p-2 text-white/80 transition-colors hover:bg-white/10 lg:hidden"
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
               aria-label="Toggle menu"
             >
               {isMobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-            </motion.button>
+            </button>
           </div>
         </div>
 
         {/* Mobile Menu */}
-        <AnimatePresence>
-          {isMobileMenuOpen && (
-            <motion.div
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: "auto", opacity: 1 }}
-              exit={{ height: 0, opacity: 0 }}
-              className="overflow-hidden lg:hidden"
-            >
-              <div className="mx-auto flex max-w-7xl flex-col gap-1 px-4 pb-3 pt-1">
-                {/* Mobile Delivery/Pickup Toggle */}
-                <div className="mb-2 flex rounded-full border border-white/20 bg-white/10 p-0.5">
-                  <button
-                    onClick={() => handleToggleOrderType('delivery')}
-                    className={cn(
-                      'flex flex-1 items-center justify-center gap-1.5 rounded-full px-3 py-2 text-xs font-semibold transition-all',
-                      orderType === 'delivery' ? 'bg-white text-[#C1121F]' : 'text-white/70'
-                    )}
-                  >
-                    <MapPin className="h-3 w-3" />
-                    Delivery
-                  </button>
-                  <button
-                    onClick={() => handleToggleOrderType('pickup')}
-                    className={cn(
-                      'flex flex-1 items-center justify-center gap-1.5 rounded-full px-3 py-2 text-xs font-semibold transition-all',
-                      orderType === 'pickup' ? 'bg-white text-[#C1121F]' : 'text-white/70'
-                    )}
-                  >
-                    <Store className="h-3 w-3" />
-                    Pickup
-                  </button>
-                </div>
-
-                {navLinks.map((link, index) => (
-                  <motion.button
-                    key={link.name}
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: index * 0.05 }}
-                    onClick={(e) => handleNavClick(link, e)}
-                    className="rounded-lg px-4 py-2.5 text-left text-sm font-medium text-white/80 transition-colors hover:bg-white/10 hover:text-white"
-                  >
-                    {link.name}
-                  </motion.button>
-                ))}
-
-                {/* Mobile Profile Links */}
-                <div className="mt-2 border-t border-white/10 pt-2">
-                  <Link
-                    href="/profile"
-                    className="flex items-center gap-3 rounded-lg px-4 py-2.5 text-sm font-medium text-white/80 transition-colors hover:bg-white/10"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                  >
-                    <User className="h-4 w-4" />
-                    My Profile
-                  </Link>
-                  <Link
-                    href="/profile/orders"
-                    className="flex items-center gap-3 rounded-lg px-4 py-2.5 text-sm font-medium text-white/80 transition-colors hover:bg-white/10"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                  >
-                    <ClipboardList className="h-4 w-4" />
-                    Order History
-                  </Link>
-                  <Link
-                    href="/admin"
-                    className="flex items-center gap-3 rounded-lg px-4 py-2.5 text-sm font-medium text-[#FCA311] transition-colors hover:bg-white/10"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                  >
-                    <LayoutDashboard className="h-4 w-4" />
-                    Admin Dashboard
-                  </Link>
-                </div>
-              </div>
-            </motion.div>
+        <div
+          className={cn(
+            'overflow-hidden transition-all duration-300 lg:hidden',
+            isMobileMenuOpen ? 'max-h-[500px] opacity-100' : 'max-h-0 opacity-0'
           )}
-        </AnimatePresence>
-      </motion.nav>
+        >
+          <div className="mx-auto flex max-w-7xl flex-col gap-1 px-4 pb-3 pt-1">
+            {/* Mobile Delivery/Pickup Toggle */}
+            <div className="mb-2 flex rounded-full border border-white/20 bg-white/10 p-0.5">
+              <button
+                onClick={() => handleToggleOrderType('delivery')}
+                className={cn(
+                  'flex flex-1 items-center justify-center gap-1.5 rounded-full px-3 py-2 text-xs font-semibold transition-all',
+                  orderType === 'delivery' ? 'bg-white text-[#C1121F]' : 'text-white/70'
+                )}
+              >
+                <MapPin className="h-3 w-3" />
+                Delivery
+              </button>
+              <button
+                onClick={() => handleToggleOrderType('pickup')}
+                className={cn(
+                  'flex flex-1 items-center justify-center gap-1.5 rounded-full px-3 py-2 text-xs font-semibold transition-all',
+                  orderType === 'pickup' ? 'bg-white text-[#C1121F]' : 'text-white/70'
+                )}
+              >
+                <Store className="h-3 w-3" />
+                Pickup
+              </button>
+            </div>
+
+            {navLinks.map((link) => (
+              <button
+                key={link.name}
+                onClick={(e) => handleNavClick(link, e)}
+                className="rounded-lg px-4 py-2.5 text-left text-sm font-medium text-white/80 transition-colors hover:bg-white/10 hover:text-white"
+              >
+                {link.name}
+              </button>
+            ))}
+          </div>
+        </div>
+      </nav>
 
       {/* About Us Modal */}
-      <AnimatePresence>
-        {showAbout && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[70] flex items-center justify-center bg-[#1A1A1A]/60 p-4 backdrop-blur-sm"
-            onClick={() => setShowAbout(false)}
+      {showAbout && (
+        <div
+          className="fixed inset-0 z-[70] flex items-center justify-center bg-[#1a1a1a]/60 p-4 backdrop-blur-sm"
+          onClick={() => setShowAbout(false)}
+        >
+          <div
+            className="relative w-full max-w-lg overflow-hidden rounded-2xl bg-card shadow-2xl animate-fade-in-up"
+            onClick={(e) => e.stopPropagation()}
+            role="dialog"
+            aria-modal="true"
+            aria-label="About Fatty Patty"
           >
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.9, y: 20 }}
-              className="relative w-full max-w-lg overflow-hidden rounded-2xl bg-card shadow-2xl"
-              onClick={(e) => e.stopPropagation()}
-              role="dialog"
-              aria-modal="true"
-              aria-label="About Fatty Patty"
+            <button
+              onClick={() => setShowAbout(false)}
+              className="absolute right-3 top-3 z-10 flex h-9 w-9 items-center justify-center rounded-full bg-[#1a1a1a]/50 text-white backdrop-blur-sm transition-colors hover:bg-[#1a1a1a]/70"
+              aria-label="Close"
             >
-              <button
-                onClick={() => setShowAbout(false)}
-                className="absolute right-3 top-3 z-10 flex h-9 w-9 items-center justify-center rounded-full bg-[#1A1A1A]/50 text-white backdrop-blur-sm transition-colors hover:bg-[#1A1A1A]/70"
-                aria-label="Close"
-              >
-                <X className="h-4 w-4" />
-              </button>
-              <div className="bg-[#C1121F] px-8 pb-6 pt-8 text-center">
-                <div className="mx-auto mb-4 h-20 w-20 overflow-hidden rounded-full border-3 border-[#FCA311]/40">
-                  <Image
-                    src="/images/logo.png"
-                    alt="Fatty Patty"
-                    width={80}
-                    height={80}
-                    className="h-full w-full object-cover"
-                  />
-                </div>
-                <h2 className="font-serif text-2xl font-bold text-white">About Fatty Patty</h2>
-                <span className="mt-1 inline-block text-sm text-white/70">Established 2020</span>
+              <X className="h-4 w-4" />
+            </button>
+            <div className="bg-[#C1121F] px-8 pb-6 pt-8 text-center">
+              <div className="mx-auto mb-4 h-20 w-20 overflow-hidden rounded-full border-3 border-[#F4A261]/40">
+                <Image
+                  src="/images/logo.png"
+                  alt="Fatty Patty"
+                  width={80}
+                  height={80}
+                  className="h-full w-full object-cover"
+                />
               </div>
-              <div className="p-8">
-                <p className="text-sm leading-relaxed text-muted-foreground">
-                  Established in 2020, Fatty Patty is dedicated to delivering bold flavors and premium quality fast food. From juicy burgers to satisfying bowls and crispy tenders, we focus on freshness, taste, and consistency. Our mission is simple: serve happiness in every bite.
-                </p>
-                <div className="mt-6 flex items-center gap-3">
-                  <Info className="h-5 w-5 flex-shrink-0 text-[#C1121F]" />
-                  <div>
-                    <p className="text-xs font-semibold text-foreground">Our Locations</p>
-                    <p className="text-xs text-muted-foreground">{"Creek Walk DHA Phase 8 \u2022 Habitt City Tipu Sultan"}</p>
-                  </div>
+              <h2 className="font-serif text-2xl font-bold text-white">About Fatty Patty</h2>
+              <span className="mt-1 inline-block text-sm text-white/70">Established 2020</span>
+            </div>
+            <div className="p-8">
+              <p className="text-sm leading-relaxed text-muted-foreground">
+                Established in 2020, Fatty Patty is dedicated to delivering bold flavors and premium quality fast food. From juicy burgers to satisfying bowls and crispy tenders, we focus on freshness, taste, and consistency. Our mission is simple: serve happiness in every bite.
+              </p>
+              <div className="mt-6 flex items-center gap-3">
+                <Info className="h-5 w-5 flex-shrink-0 text-[#C1121F]" />
+                <div>
+                  <p className="text-xs font-semibold text-foreground">Our Locations</p>
+                  <p className="text-xs text-muted-foreground">{"Creek Walk DHA Phase 8 \u2022 Habit City Tipu Sultan"}</p>
                 </div>
               </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   )
 }

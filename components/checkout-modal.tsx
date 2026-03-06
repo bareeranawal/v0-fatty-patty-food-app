@@ -1,13 +1,10 @@
 "use client"
 
 import { useState } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
-import { X, CheckCircle2, MessageCircle } from 'lucide-react'
+import { X, CheckCircle2 } from 'lucide-react'
 import { useCart } from '@/lib/cart-context'
 import { useOrder, deliveryAreas, branches } from '@/lib/order-context'
 import { toast } from 'sonner'
-
-const WHATSAPP_NUMBER = "923342024000"
 
 interface CheckoutModalProps {
   onClose: () => void
@@ -33,76 +30,6 @@ export function CheckoutModal({ onClose }: CheckoutModalProps) {
   const deliveryFee = formData.orderType === 'delivery' ? 150 : 0
   const total = subtotal + deliveryFee
   const estimatedTime = formData.orderType === 'delivery' ? '35-45 minutes' : '15-20 minutes'
-
-  const generateWhatsAppMessage = () => {
-    const branchName = formData.branch ? branches.find(b => b.id === formData.branch)?.name : ''
-    
-    let message = `*New Order - Fatty Patty*\n\n`
-    message += `*Order Type:* ${formData.orderType === 'delivery' ? 'Delivery' : 'Pickup'}\n`
-    
-    if (formData.orderType === 'delivery') {
-      message += `*Area:* ${formData.area}\n`
-      message += `*Address:* ${formData.address}\n`
-    } else {
-      message += `*Pickup Branch:* ${branchName}\n`
-    }
-    
-    message += `\n*Items:*\n`
-    items.forEach((item) => {
-      const addOnTotal = item.addOns.reduce((sum, a) => sum + a.price, 0)
-      const itemTotal = (item.menuItem.price + addOnTotal) * item.quantity
-      message += `${item.quantity}x ${item.menuItem.name} - Rs. ${itemTotal.toLocaleString()}\n`
-      if (item.addOns.length > 0) {
-        message += `   Add-ons: ${item.addOns.map(a => a.name).join(', ')}\n`
-      }
-      if (item.specialInstructions) {
-        message += `   Note: ${item.specialInstructions}\n`
-      }
-    })
-    
-    message += `\n*Subtotal:* Rs. ${subtotal.toLocaleString()}`
-    if (formData.orderType === 'delivery') {
-      message += `\n*Delivery Fee:* Rs. ${deliveryFee}`
-    }
-    message += `\n*Total:* Rs. ${total.toLocaleString()}`
-    
-    message += `\n\n*Customer Details:*\n`
-    message += `Name: ${formData.fullName}\n`
-    message += `Phone: ${formData.phone}\n`
-    if (formData.email) {
-      message += `Email: ${formData.email}\n`
-    }
-    
-    if (formData.notes) {
-      message += `\n*Special Instructions:*\n${formData.notes}`
-    }
-    
-    return encodeURIComponent(message)
-  }
-
-  const handleWhatsAppOrder = () => {
-    if (!formData.fullName || !formData.phone) {
-      toast.error('Please fill in your name and phone number')
-      return
-    }
-    if (formData.orderType === 'delivery' && (!formData.area || !formData.address)) {
-      toast.error('Please fill in delivery area and address')
-      return
-    }
-    if (formData.orderType === 'pickup' && !formData.branch) {
-      toast.error('Please select a pickup branch')
-      return
-    }
-
-    const message = generateWhatsAppMessage()
-    window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${message}`, '_blank')
-    
-    // Clear cart and show success
-    clearCart()
-    setOrderPlaced(true)
-    setOrderId(`FP-${Date.now().toString(36).toUpperCase()}`)
-    toast.success('Opening WhatsApp to complete your order!')
-  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -146,6 +73,7 @@ export function CheckoutModal({ onClose }: CheckoutModalProps) {
 
       setOrderId(newOrderId)
       setOrderPlaced(true)
+      // Clear cart ONLY after successful order
       clearCart()
       toast.success('Order placed successfully!')
     } catch {
@@ -161,20 +89,11 @@ export function CheckoutModal({ onClose }: CheckoutModalProps) {
 
   if (orderPlaced) {
     return (
-      <div className="fixed inset-0 z-[60] flex items-center justify-center bg-[#1A1A1A]/50 backdrop-blur-sm p-4">
-        <motion.div 
-          className="w-full max-w-md rounded-2xl bg-card p-8 text-center shadow-2xl"
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-        >
-          <motion.div 
-            className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-green-100"
-            initial={{ scale: 0 }}
-            animate={{ scale: 1 }}
-            transition={{ type: "spring", delay: 0.2 }}
-          >
+      <div className="fixed inset-0 z-[60] flex items-center justify-center bg-[#1a1a1a]/50 backdrop-blur-sm p-4">
+        <div className="w-full max-w-md rounded-2xl bg-card p-8 text-center shadow-2xl animate-fade-in-up">
+          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-green-100">
             <CheckCircle2 className="h-8 w-8 text-green-600" />
-          </motion.div>
+          </div>
           <h2 className="mb-2 text-2xl font-bold text-foreground">Order Placed!</h2>
           <p className="mb-1 text-sm text-muted-foreground">
             Your order has been placed successfully.
@@ -186,7 +105,7 @@ export function CheckoutModal({ onClose }: CheckoutModalProps) {
             Estimated Time: <span className="font-medium text-foreground">{estimatedTime}</span>
           </p>
           <p className="mb-6 text-xs text-muted-foreground">
-            We will contact you shortly to confirm your order.
+            A confirmation email has been sent to your email with the order details.
           </p>
           <button
             onClick={onClose}
@@ -194,18 +113,14 @@ export function CheckoutModal({ onClose }: CheckoutModalProps) {
           >
             Done
           </button>
-        </motion.div>
+        </div>
       </div>
     )
   }
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-start justify-center overflow-y-auto bg-[#1A1A1A]/50 p-4 backdrop-blur-sm">
-      <motion.div 
-        className="my-8 w-full max-w-2xl rounded-2xl bg-card shadow-2xl"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-      >
+    <div className="fixed inset-0 z-[60] flex items-start justify-center overflow-y-auto bg-[#1a1a1a]/50 p-4 backdrop-blur-sm">
+      <div className="my-8 w-full max-w-2xl rounded-2xl bg-card shadow-2xl animate-fade-in-up">
         <div className="flex items-center justify-between border-b border-border p-5">
           <h2 className="text-lg font-bold text-foreground">Checkout</h2>
           <button
@@ -234,7 +149,8 @@ export function CheckoutModal({ onClose }: CheckoutModalProps) {
                   />
                   <input
                     type="email"
-                    placeholder="Email Address (optional)"
+                    required
+                    placeholder="Email Address"
                     value={formData.email}
                     onChange={(e) => updateField('email', e.target.value)}
                     className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-[#C1121F] focus:outline-none focus:ring-2 focus:ring-[#C1121F]/20"
@@ -280,70 +196,58 @@ export function CheckoutModal({ onClose }: CheckoutModalProps) {
               </div>
 
               {/* Delivery Details */}
-              <AnimatePresence mode="wait">
-                {formData.orderType === 'delivery' && (
-                  <motion.div
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: "auto" }}
-                    exit={{ opacity: 0, height: 0 }}
-                  >
-                    <h3 className="mb-3 text-sm font-bold uppercase tracking-wider text-foreground">Delivery Details</h3>
-                    <div className="space-y-3">
-                      <select
-                        required
-                        value={formData.area}
-                        onChange={(e) => updateField('area', e.target.value)}
-                        className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm text-foreground focus:border-[#C1121F] focus:outline-none focus:ring-2 focus:ring-[#C1121F]/20"
-                      >
-                        <option value="">Select Delivery Area</option>
-                        {deliveryAreas.map((area) => (
-                          <option key={area} value={area}>{area}</option>
-                        ))}
-                      </select>
-                      <input
-                        type="text"
-                        required
-                        placeholder="Full Delivery Address"
-                        value={formData.address}
-                        onChange={(e) => updateField('address', e.target.value)}
-                        className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-[#C1121F] focus:outline-none focus:ring-2 focus:ring-[#C1121F]/20"
-                      />
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
+              {formData.orderType === 'delivery' && (
+                <div>
+                  <h3 className="mb-3 text-sm font-bold uppercase tracking-wider text-foreground">Delivery Details</h3>
+                  <div className="space-y-3">
+                    <select
+                      required
+                      value={formData.area}
+                      onChange={(e) => updateField('area', e.target.value)}
+                      className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm text-foreground focus:border-[#C1121F] focus:outline-none focus:ring-2 focus:ring-[#C1121F]/20"
+                    >
+                      <option value="">Select Delivery Area</option>
+                      {deliveryAreas.map((area) => (
+                        <option key={area} value={area}>{area}</option>
+                      ))}
+                    </select>
+                    <input
+                      type="text"
+                      required
+                      placeholder="Full Delivery Address"
+                      value={formData.address}
+                      onChange={(e) => updateField('address', e.target.value)}
+                      className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-[#C1121F] focus:outline-none focus:ring-2 focus:ring-[#C1121F]/20"
+                    />
+                  </div>
+                </div>
+              )}
 
               {/* Pickup Branch */}
-              <AnimatePresence mode="wait">
-                {formData.orderType === 'pickup' && (
-                  <motion.div
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: "auto" }}
-                    exit={{ opacity: 0, height: 0 }}
-                  >
-                    <h3 className="mb-3 text-sm font-bold uppercase tracking-wider text-foreground">Pickup Branch</h3>
-                    <div className="space-y-2">
-                      {branches.map((branch) => (
-                        <button
-                          key={branch.id}
-                          type="button"
-                          onClick={() => updateField('branch', branch.id)}
-                          className={`flex w-full items-start gap-3 rounded-xl border p-4 text-left transition-all ${
-                            formData.branch === branch.id
-                              ? 'border-[#C1121F] bg-[#C1121F]/5'
-                              : 'border-border bg-background hover:bg-muted'
-                          }`}
-                        >
-                          <div>
-                            <p className="text-sm font-semibold text-foreground">{branch.name}</p>
-                            <p className="text-xs text-muted-foreground">{branch.address}</p>
-                          </div>
-                        </button>
-                      ))}
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
+              {formData.orderType === 'pickup' && (
+                <div>
+                  <h3 className="mb-3 text-sm font-bold uppercase tracking-wider text-foreground">Pickup Branch</h3>
+                  <div className="space-y-2">
+                    {branches.map((branch) => (
+                      <button
+                        key={branch.id}
+                        type="button"
+                        onClick={() => updateField('branch', branch.id)}
+                        className={`flex w-full items-start gap-3 rounded-xl border p-4 text-left transition-all ${
+                          formData.branch === branch.id
+                            ? 'border-[#C1121F] bg-[#C1121F]/5'
+                            : 'border-border bg-background hover:bg-muted'
+                        }`}
+                      >
+                        <div>
+                          <p className="text-sm font-semibold text-foreground">{branch.name}</p>
+                          <p className="text-xs text-muted-foreground">{branch.address}</p>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {/* Notes */}
               <div>
@@ -397,26 +301,15 @@ export function CheckoutModal({ onClose }: CheckoutModalProps) {
             </div>
           </div>
 
-          {/* Action Buttons */}
-          <div className="mt-6 flex flex-col gap-3 sm:flex-row">
-            <button
-              type="button"
-              onClick={handleWhatsAppOrder}
-              className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-[#25D366] py-3.5 text-sm font-semibold text-white transition-all hover:bg-[#25D366]/90 active:scale-[0.98]"
-            >
-              <MessageCircle className="h-5 w-5" />
-              Order via WhatsApp
-            </button>
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className="flex-1 rounded-xl bg-[#C1121F] py-3.5 text-sm font-semibold text-white transition-all hover:bg-[#C1121F]/90 disabled:opacity-50 active:scale-[0.98]"
-            >
-              {isSubmitting ? 'Placing Order...' : `Place Order - Rs. ${total.toLocaleString()}`}
-            </button>
-          </div>
+          <button
+            type="submit"
+            disabled={isSubmitting}
+            className="mt-6 w-full rounded-xl bg-[#C1121F] py-3.5 text-sm font-semibold text-white transition-all hover:bg-[#C1121F]/90 disabled:opacity-50 active:scale-[0.98]"
+          >
+            {isSubmitting ? 'Placing Order...' : `Place Order - Rs. ${total.toLocaleString()}`}
+          </button>
         </form>
-      </motion.div>
+      </div>
     </div>
   )
 }
