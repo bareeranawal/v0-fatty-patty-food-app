@@ -114,14 +114,14 @@ function OrderTrackingContent() {
   }, [searchParams])
 
   const handleSearch = async (searchOrderNumber?: string, searchPhone?: string) => {
-    const orderNum = searchOrderNumber || orderNumber
-    const phoneNum = searchPhone || phone
+    const orderNum = (searchOrderNumber || orderNumber).trim().toUpperCase()
+    const phoneNum = (searchPhone || phone).trim()
 
-    if (!orderNum.trim()) {
+    if (!orderNum) {
       toast.error('Please enter your order number')
       return
     }
-    if (!phoneNum.trim()) {
+    if (!phoneNum) {
       toast.error('Please enter your phone number')
       return
     }
@@ -130,19 +130,73 @@ function OrderTrackingContent() {
     setHasSearched(true)
 
     try {
+      // First try API
       const response = await fetch(
-        `/api/orders/track?orderNumber=${encodeURIComponent(orderNum.trim())}&phone=${encodeURIComponent(phoneNum.trim())}`
+        `/api/orders/track?orderNumber=${encodeURIComponent(orderNum)}&phone=${encodeURIComponent(phoneNum)}`
       )
       const result = await response.json()
 
-      if (!response.ok || result.error) {
-        throw new Error(result.error || 'Order not found')
+      if (response.ok && !result.error && result.data) {
+        setOrder(result.data)
+        return
       }
+    } catch {
+      // API failed, continue to localStorage
+    }
 
-      setOrder(result.data)
-    } catch (error) {
+    // Fallback: Search localStorage
+    try {
+      const localOrders = JSON.parse(localStorage.getItem('orders') || '[]')
+      const cleanPhoneInput = phoneNum.replace(/[\s\-\(\)]/g, '')
+      
+      const foundOrder = localOrders.find((o: Record<string, unknown>) => {
+        const orderNumber = (o.order_number as string || '').toUpperCase()
+        const customerPhone = ((o.customerPhone || o.customer_phone) as string || '').replace(/[\s\-\(\)]/g, '')
+        
+        const orderMatches = orderNumber === orderNum || orderNumber.includes(orderNum) || orderNum.includes(orderNumber)
+        const phoneMatches = customerPhone.includes(cleanPhoneInput) || cleanPhoneInput.includes(customerPhone)
+        
+        return orderMatches && phoneMatches
+      })
+
+      if (foundOrder) {
+        // Convert localStorage format to display format
+        const formattedOrder: Order = {
+          id: String(foundOrder.id),
+          order_number: foundOrder.order_number,
+          customer_name: foundOrder.customerName || foundOrder.customer_name || 'Unknown',
+          customer_phone: foundOrder.customerPhone || foundOrder.customer_phone || '',
+          customer_email: foundOrder.customerEmail || foundOrder.customer_email || null,
+          order_type: foundOrder.orderType || foundOrder.order_type || 'delivery',
+          status: (foundOrder.status || 'pending').toLowerCase(),
+          delivery_address: foundOrder.deliveryAddress || foundOrder.delivery_address || null,
+          delivery_fee: foundOrder.deliveryFee || foundOrder.delivery_fee || 0,
+          subtotal: foundOrder.subtotal || 0,
+          tax_amount: foundOrder.taxAmount || foundOrder.tax_amount || 0,
+          discount_amount: foundOrder.discountAmount || foundOrder.discount_amount || 0,
+          total_amount: foundOrder.total || foundOrder.total_amount || 0,
+          special_instructions: foundOrder.specialInstructions || foundOrder.special_instructions || null,
+          estimated_ready_time: null,
+          created_at: foundOrder.createdAt || foundOrder.created_at || new Date().toISOString(),
+          items: (foundOrder.items || []).map((item: Record<string, unknown>, index: number) => ({
+            id: String(item.id || index),
+            item_name: `${item.name || 'Item'}${item.variation ? ` (${item.variation})` : ''}`,
+            quantity: Number(item.quantity) || 1,
+            unit_price: Number(item.price) || 0,
+            total_price: Number(item.price) || 0,
+            customizations: item.addOns ? { addOns: item.addOns } : null,
+          })),
+          status_history: [],
+          branch: foundOrder.pickupBranch ? { name: foundOrder.pickupBranch, address: '' } : undefined,
+        }
+        setOrder(formattedOrder)
+      } else {
+        setOrder(null)
+        toast.error('Order not found. Please check your order number and phone number.')
+      }
+    } catch {
       setOrder(null)
-      toast.error(error instanceof Error ? error.message : 'Failed to find order')
+      toast.error('Failed to find order')
     } finally {
       setIsLoading(false)
     }
