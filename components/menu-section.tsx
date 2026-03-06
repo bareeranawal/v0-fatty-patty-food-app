@@ -52,9 +52,20 @@ export function MenuSection({ onItemClick }: MenuSectionProps) {
     
     loadProducts()
     
-    // Listen for storage changes (when admin updates products)
+    // Listen for storage changes (when admin updates products in another tab)
     window.addEventListener('storage', loadProducts)
-    return () => window.removeEventListener('storage', loadProducts)
+    
+    // Also reload when window gets focus (same tab scenario)
+    window.addEventListener('focus', loadProducts)
+    
+    // Set up interval to check for updates every 5 seconds
+    const interval = setInterval(loadProducts, 5000)
+    
+    return () => {
+      window.removeEventListener('storage', loadProducts)
+      window.removeEventListener('focus', loadProducts)
+      clearInterval(interval)
+    }
   }, [])
 
   useEffect(() => {
