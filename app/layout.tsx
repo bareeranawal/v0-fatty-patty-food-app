@@ -4,6 +4,7 @@ import { Analytics } from '@vercel/analytics/next'
 import { ThemeProvider } from 'next-themes'
 import { CartProvider } from '@/lib/cart-context'
 import { OrderProvider } from '@/lib/order-context'
+import { StorageInit } from '@/components/storage-init'
 import { Toaster } from 'sonner'
 import './globals.css'
 
@@ -34,6 +35,7 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${inter.variable} ${playfair.variable}`} suppressHydrationWarning>
       <body className="font-sans antialiased">
+        <StorageInit />
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false}>
           <OrderProvider>
             <CartProvider>

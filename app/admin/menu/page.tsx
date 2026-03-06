@@ -93,7 +93,7 @@ export default function AdminMenuPage() {
           is_available: item.is_available,
           rating: 4.5,
         }))
-        setStorageWithSync('products', JSON.stringify(productsForStorage))
+        setStorageWithSync('menuItems', JSON.stringify(productsForStorage))
       }
     } catch (error) {
       console.error('Error fetching menu:', error)
@@ -137,7 +137,7 @@ export default function AdminMenuPage() {
         is_available: item.is_available,
         rating: 4.5,
       }))
-      setStorageWithSync('products', JSON.stringify(productsForStorage))
+      setStorageWithSync('menuItems', JSON.stringify(productsForStorage))
 
       toast.success(`Item ${!currentStatus ? 'enabled' : 'disabled'}`)
     } catch {
@@ -259,7 +259,7 @@ export default function AdminMenuPage() {
         is_available: item.is_available,
         rating: 4.5,
       }))
-      localStorage.setItem('products', JSON.stringify(productsForStorage))
+      setStorageWithSync('menuItems', JSON.stringify(productsForStorage))
 
       setShowModal(false)
       setFormData(initialFormData)
@@ -296,7 +296,7 @@ export default function AdminMenuPage() {
         is_available: item.is_available,
         rating: 4.5,
       }))
-      localStorage.setItem('products', JSON.stringify(productsForStorage))
+      setStorageWithSync('menuItems', JSON.stringify(productsForStorage))
       
       toast.success('Menu item deleted successfully')
       setDeleteConfirm(null)

@@ -42,7 +42,7 @@ export function Promotions({ onDealClick }: PromotionsProps) {
         console.error('[v0] Error fetching deals from API, falling back to localStorage:', error)
       }
       
-      // Fallback to localStorage if API fails
+      // Fallback to localStorage if API fails - use deals key
       const storedDeals = localStorage.getItem('deals')
       if (storedDeals) {
         try {

@@ -48,8 +48,8 @@ export function MenuSection({ onItemClick }: MenuSectionProps) {
         console.error('[v0] Error fetching from API, falling back to localStorage:', error)
       }
       
-      // Fallback to localStorage if API fails
-      const storedProducts = localStorage.getItem('products')
+      // Fallback to localStorage if API fails - check both menuItems and legacy products key
+      const storedProducts = localStorage.getItem('menuItems') || localStorage.getItem('products')
       if (storedProducts) {
         try {
           const products = JSON.parse(storedProducts)

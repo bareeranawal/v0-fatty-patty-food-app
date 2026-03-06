@@ -16,6 +16,7 @@ import {
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
+import { setStorageWithSync } from '@/lib/storage-sync'
 
 interface OrderItem {
   id: string
@@ -168,7 +169,7 @@ function OrdersContent() {
           ? { ...o, status: newStatus } 
           : o
       )
-      localStorage.setItem('orders', JSON.stringify(updatedLocalOrders))
+      setStorageWithSync('orders', JSON.stringify(updatedLocalOrders))
 
       setOrders(prev => prev.map(o => 
         o.id === orderId ? { ...o, status: newStatus } : o
