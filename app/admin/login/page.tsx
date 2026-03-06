@@ -1,9 +1,11 @@
 'use client'
 
-import { createClient } from '@/lib/supabase/client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Loader2, Lock, Mail } from 'lucide-react'
+
+const ADMIN_EMAIL = "fattypattyadmin@gmail.com"
+const ADMIN_PASSWORD = "fatty@patty234"
 
 export default function AdminLoginPage() {
   const [email, setEmail] = useState('')
@@ -12,27 +14,29 @@ export default function AdminLoginPage() {
   const [isLoading, setIsLoading] = useState(false)
   const router = useRouter()
 
+  // Check if already logged in
+  useEffect(() => {
+    if (typeof window !== 'undefined' && localStorage.getItem('adminAuth') === 'true') {
+      router.push('/admin')
+    }
+  }, [router])
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
-    const supabase = createClient()
     setIsLoading(true)
     setError(null)
 
-    try {
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      })
-      
-      if (error) throw error
-      
+    const emailInput = email.trim().toLowerCase()
+    const passwordInput = password.trim()
+
+    if (emailInput === ADMIN_EMAIL.toLowerCase() && passwordInput === ADMIN_PASSWORD) {
+      localStorage.setItem('adminAuth', 'true')
       router.push('/admin')
-      router.refresh()
-    } catch (error: unknown) {
-      setError(error instanceof Error ? error.message : 'Invalid email or password')
-    } finally {
-      setIsLoading(false)
+    } else {
+      setError('Invalid credentials')
     }
+    
+    setIsLoading(false)
   }
 
   return (

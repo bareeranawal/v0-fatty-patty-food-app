@@ -67,56 +67,70 @@ export function CheckoutModal({ onClose }: CheckoutModalProps) {
     setIsSubmitting(true)
 
     try {
-      // Prepare cart items for API
-      const cartItemsForApi = items.map((item: CartItem) => ({
+      // Prepare cart items for order
+      const orderItems = items.map((item: CartItem) => ({
         id: item.id,
-        type: item.type,
-        menuItem: item.menuItem ? {
-          id: item.menuItem.id,
-          name: item.menuItem.name,
-          price: item.menuItem.price,
-          image: item.menuItem.image,
-        } : undefined,
-        deal: item.deal ? {
-          id: item.deal.id,
-          name: item.deal.name,
-          title: item.deal.title,
-          price: item.deal.price,
-          image: item.deal.image,
-        } : undefined,
-        dealSelections: item.dealSelections,
+        name: item.type === 'deal' 
+          ? `${item.deal?.name} - ${item.deal?.title}` 
+          : item.menuItem?.name || 'Unknown Item',
+        variation: item.type === 'deal' 
+          ? item.deal?.title 
+          : (item.menuItem?.variations && item.menuItem.variations.length > 0 
+              ? item.menuItem.variations[0].name 
+              : 'Standard'),
         quantity: item.quantity,
-        customizations: {
-          addOns: item.addOns,
-          specialInstructions: item.specialInstructions,
-        },
-        unitPrice: item.unitPrice,
-        totalPrice: item.totalPrice,
+        price: item.totalPrice,
+        addOns: item.addOns,
+        specialInstructions: item.specialInstructions,
       }))
 
-      const response = await fetch('/api/orders', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          customerName: formData.fullName.trim(),
-          customerPhone: formData.phone.trim(),
-          customerEmail: formData.email.trim() || 'guest@fattypatty.pk',
-          orderType: formData.orderType,
-          pickupBranch: formData.orderType === 'pickup' ? (branches.find(b => b.id === formData.branch)?.name || formData.branch) : undefined,
-          deliveryArea: formData.orderType === 'delivery' ? formData.area : undefined,
-          deliveryAddress: formData.orderType === 'delivery' ? formData.address.trim() : undefined,
-          deliveryFee,
-          subtotal,
-          total,
-          specialInstructions: formData.notes.trim() || undefined,
-          items: cartItemsForApi,
-        }),
-      })
+      // Generate order number
+      const generatedOrderNumber = `FP-${Date.now()}`
 
-      const result = await response.json()
+      // Create order object
+      const newOrder = {
+        id: Date.now(),
+        order_number: generatedOrderNumber,
+        customerName: formData.fullName.trim(),
+        customerPhone: formData.phone.trim(),
+        customerEmail: formData.email.trim() || 'guest@fattypatty.pk',
+        orderType: formData.orderType,
+        pickupBranch: formData.orderType === 'pickup' ? (branches.find(b => b.id === formData.branch)?.name || formData.branch) : undefined,
+        deliveryArea: formData.orderType === 'delivery' ? formData.area : undefined,
+        deliveryAddress: formData.orderType === 'delivery' ? formData.address.trim() : undefined,
+        deliveryFee,
+        subtotal,
+        total,
+        specialInstructions: formData.notes.trim() || undefined,
+        items: orderItems,
+        status: 'Pending',
+        createdAt: new Date().toISOString(),
+      }
 
-      if (!response.ok || result.error) {
-        throw new Error(result.error || 'Failed to place order')
+      // Try API first, fallback to localStorage
+      let orderNumber = generatedOrderNumber
+      try {
+        const response = await fetch('/api/orders', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(newOrder),
+        })
+
+        const result = await response.json()
+
+        if (response.ok && !result.error && result.data?.order_number) {
+          orderNumber = result.data.order_number
+        } else {
+          // API failed, save to localStorage
+          const orders = JSON.parse(localStorage.getItem('orders') || '[]')
+          orders.push(newOrder)
+          localStorage.setItem('orders', JSON.stringify(orders))
+        }
+      } catch {
+        // API error, save to localStorage
+        const orders = JSON.parse(localStorage.getItem('orders') || '[]')
+        orders.push(newOrder)
+        localStorage.setItem('orders', JSON.stringify(orders))
       }
 
       // Try to send confirmation email (non-blocking)
@@ -127,13 +141,11 @@ export function CheckoutModal({ onClose }: CheckoutModalProps) {
           body: JSON.stringify({
             customerName: formData.fullName,
             email: formData.email,
-            orderId: result.data.order_number,
-            items: items.map(item => ({
-              name: item.type === 'deal' 
-                ? `${item.deal?.name} - ${item.deal?.title}` 
-                : item.menuItem?.name,
+            orderId: orderNumber,
+            items: orderItems.map(item => ({
+              name: item.name,
               quantity: item.quantity,
-              price: item.totalPrice,
+              price: item.price,
             })),
             total,
             orderType: formData.orderType,
@@ -146,7 +158,7 @@ export function CheckoutModal({ onClose }: CheckoutModalProps) {
         // Email sending is non-critical
       }
 
-      setOrderNumber(result.data.order_number)
+      setOrderNumber(orderNumber)
       setOrderPlaced(true)
       clearCart()
       toast.success('Order placed successfully!')

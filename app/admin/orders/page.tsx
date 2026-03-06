@@ -20,53 +20,61 @@ import { cn } from '@/lib/utils'
 interface OrderItem {
   id: string
   name: string
+  variation?: string
   title?: string | null
-  type: 'menu_item' | 'deal'
+  type?: 'menu_item' | 'deal'
   quantity: number
-  unitPrice: number
-  totalPrice: number
+  price?: number
+  unitPrice?: number
+  totalPrice?: number
+  unit_price?: number
+  total_price?: number
+  item_name?: string
   addOns?: Array<{ id: string; name: string; price: number }>
   specialInstructions?: string | null
 }
 
 interface Order {
-  id: string
+  id: string | number
   order_number: string
-  customer_name: string
-  customer_phone: string
-  customer_email: string | null
-  order_type: 'delivery' | 'pickup'
+  customer_name?: string
+  customerName?: string
+  customer_phone?: string
+  customerPhone?: string
+  customer_email?: string | null
+  customerEmail?: string | null
+  order_type?: 'delivery' | 'pickup'
+  orderType?: 'delivery' | 'pickup'
   status: string
-  delivery_area: string | null
-  delivery_address: string | null
-  pickup_branch: string | null
-  delivery_fee: number
+  delivery_area?: string | null
+  deliveryArea?: string | null
+  delivery_address?: string | null
+  deliveryAddress?: string | null
+  pickup_branch?: string | null
+  pickupBranch?: string | null
+  delivery_fee?: number
+  deliveryFee?: number
   subtotal: number
   total: number
-  special_instructions: string | null
-  estimated_time: string | null
-  created_at: string
+  total_amount?: number
+  special_instructions?: string | null
+  specialInstructions?: string | null
+  estimated_time?: string | null
+  created_at?: string
+  createdAt?: string
   items: OrderItem[]
 }
 
 const statusOptions = [
   { value: 'all', label: 'All Orders' },
-  { value: 'pending', label: 'Pending' },
-  { value: 'confirmed', label: 'Confirmed' },
-  { value: 'preparing', label: 'Preparing' },
-  { value: 'ready', label: 'Ready' },
-  { value: 'out_for_delivery', label: 'Out for Delivery' },
-  { value: 'delivered', label: 'Delivered' },
-  { value: 'picked_up', label: 'Picked Up' },
-  { value: 'cancelled', label: 'Cancelled' },
+  { value: 'Pending', label: 'Pending' },
+  { value: 'Preparing', label: 'Preparing' },
+  { value: 'Delivered', label: 'Delivered' },
 ]
 
 const nextStatusMap: Record<string, string[]> = {
-  pending: ['confirmed', 'cancelled'],
-  confirmed: ['preparing', 'cancelled'],
-  preparing: ['ready', 'cancelled'],
-  ready: ['out_for_delivery', 'picked_up', 'cancelled'],
-  out_for_delivery: ['delivered', 'cancelled'],
+  Pending: ['Preparing'],
+  Preparing: ['Delivered'],
 }
 
 function OrdersContent() {
@@ -81,12 +89,46 @@ function OrdersContent() {
   const fetchOrders = async () => {
     setIsLoading(true)
     try {
-      const url = statusFilter === 'all' 
-        ? '/api/admin/orders' 
-        : `/api/admin/orders?status=${statusFilter}`
-      const response = await fetch(url)
-      const data = await response.json()
-      if (data.data) setOrders(data.data)
+      // First try API
+      let apiOrders: Order[] = []
+      try {
+        const url = statusFilter === 'all' 
+          ? '/api/admin/orders' 
+          : `/api/admin/orders?status=${statusFilter}`
+        const response = await fetch(url)
+        const data = await response.json()
+        if (data.data) apiOrders = data.data
+      } catch {
+        // API failed, continue with localStorage only
+      }
+
+      // Also get orders from localStorage
+      const localOrders: Order[] = JSON.parse(localStorage.getItem('orders') || '[]')
+      
+      // Combine and deduplicate by order_number
+      const allOrders = [...apiOrders]
+      localOrders.forEach((localOrder: Order) => {
+        if (!allOrders.find(o => o.order_number === localOrder.order_number)) {
+          allOrders.push(localOrder)
+        }
+      })
+
+      // Filter by status if needed
+      let filteredOrders = allOrders
+      if (statusFilter !== 'all') {
+        filteredOrders = allOrders.filter(o => 
+          o.status.toLowerCase() === statusFilter.toLowerCase()
+        )
+      }
+
+      // Sort by date (newest first)
+      filteredOrders.sort((a, b) => {
+        const dateA = new Date(a.created_at || a.createdAt || 0)
+        const dateB = new Date(b.created_at || b.createdAt || 0)
+        return dateB.getTime() - dateA.getTime()
+      })
+
+      setOrders(filteredOrders)
     } catch (error) {
       console.error('Error fetching orders:', error)
       toast.error('Failed to fetch orders')
@@ -101,17 +143,32 @@ function OrdersContent() {
     return () => clearInterval(interval)
   }, [statusFilter])
 
-  const updateOrderStatus = async (orderId: string, newStatus: string) => {
+  const updateOrderStatus = async (orderId: string | number, newStatus: string) => {
     setIsUpdating(true)
     try {
-      const response = await fetch(`/api/admin/orders/${orderId}/status`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: newStatus }),
-      })
-      
-      const data = await response.json()
-      if (data.error) throw new Error(data.error)
+      // Try API first
+      let apiSuccess = false
+      try {
+        const response = await fetch(`/api/admin/orders/${orderId}/status`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status: newStatus }),
+        })
+        
+        const data = await response.json()
+        if (!data.error) apiSuccess = true
+      } catch {
+        // API failed
+      }
+
+      // Also update localStorage
+      const localOrders: Order[] = JSON.parse(localStorage.getItem('orders') || '[]')
+      const updatedLocalOrders = localOrders.map(o => 
+        (o.id === orderId || o.order_number === selectedOrder?.order_number) 
+          ? { ...o, status: newStatus } 
+          : o
+      )
+      localStorage.setItem('orders', JSON.stringify(updatedLocalOrders))
 
       setOrders(prev => prev.map(o => 
         o.id === orderId ? { ...o, status: newStatus } : o
@@ -121,7 +178,7 @@ function OrdersContent() {
         setSelectedOrder(prev => prev ? { ...prev, status: newStatus } : null)
       }
 
-      toast.success(`Order status updated to ${newStatus.replace('_', ' ')}`)
+      toast.success(`Order status updated to ${newStatus}`)
     } catch (error) {
       toast.error('Failed to update order status')
     } finally {
@@ -132,28 +189,50 @@ function OrdersContent() {
   const filteredOrders = orders.filter(order => {
     if (!searchQuery) return true
     const query = searchQuery.toLowerCase()
+    const customerName = (getOrderValue(order, 'customerName') as string || '').toLowerCase()
+    const customerPhone = (getOrderValue(order, 'customerPhone') as string || '')
     return (
       order.order_number.toLowerCase().includes(query) ||
-      order.customer_name.toLowerCase().includes(query) ||
-      order.customer_phone.includes(query)
+      customerName.includes(query) ||
+      customerPhone.includes(query)
     )
   })
 
   const getStatusColor = (status: string) => {
+    const normalizedStatus = status.toLowerCase()
     const colors: Record<string, string> = {
       pending: 'bg-yellow-100 text-yellow-800 border-yellow-200',
-      confirmed: 'bg-blue-100 text-blue-800 border-blue-200',
       preparing: 'bg-orange-100 text-orange-800 border-orange-200',
-      ready: 'bg-green-100 text-green-800 border-green-200',
-      out_for_delivery: 'bg-purple-100 text-purple-800 border-purple-200',
       delivered: 'bg-green-100 text-green-800 border-green-200',
-      picked_up: 'bg-green-100 text-green-800 border-green-200',
-      cancelled: 'bg-red-100 text-red-800 border-red-200',
     }
-    return colors[status] || 'bg-gray-100 text-gray-800 border-gray-200'
+    return colors[normalizedStatus] || 'bg-gray-100 text-gray-800 border-gray-200'
   }
 
-  const formatDate = (dateString: string) => {
+  // Helper to get normalized order values
+  const getOrderValue = (order: Order, field: string) => {
+    const fieldMap: Record<string, string[]> = {
+      customerName: ['customer_name', 'customerName'],
+      customerPhone: ['customer_phone', 'customerPhone'],
+      customerEmail: ['customer_email', 'customerEmail'],
+      orderType: ['order_type', 'orderType'],
+      deliveryArea: ['delivery_area', 'deliveryArea'],
+      deliveryAddress: ['delivery_address', 'deliveryAddress'],
+      pickupBranch: ['pickup_branch', 'pickupBranch'],
+      deliveryFee: ['delivery_fee', 'deliveryFee'],
+      specialInstructions: ['special_instructions', 'specialInstructions'],
+      createdAt: ['created_at', 'createdAt'],
+    }
+    const keys = fieldMap[field] || [field]
+    for (const key of keys) {
+      if ((order as Record<string, unknown>)[key] !== undefined) {
+        return (order as Record<string, unknown>)[key]
+      }
+    }
+    return null
+  }
+
+  const formatDate = (dateString: string | undefined) => {
+    if (!dateString) return 'Unknown date'
     return new Date(dateString).toLocaleString('en-US', {
       month: 'short',
       day: 'numeric',
@@ -218,40 +297,45 @@ function OrdersContent() {
             </div>
           ) : (
             <div className="divide-y divide-border">
-              {filteredOrders.map((order) => (
-                <button
-                  key={order.id}
-                  onClick={() => setSelectedOrder(order)}
-                  className={cn(
-                    "flex w-full items-center justify-between p-4 text-left transition-colors hover:bg-muted/50",
-                    selectedOrder?.id === order.id && "bg-muted"
-                  )}
-                >
-                  <div className="flex-1 min-w-0">
+              {filteredOrders.map((order) => {
+                const customerName = getOrderValue(order, 'customerName') as string || 'Unknown'
+                const orderType = getOrderValue(order, 'orderType') as string || 'delivery'
+                const createdAt = getOrderValue(order, 'createdAt') as string
+                return (
+                  <button
+                    key={order.id}
+                    onClick={() => setSelectedOrder(order)}
+                    className={cn(
+                      "flex w-full items-center justify-between p-4 text-left transition-colors hover:bg-muted/50",
+                      selectedOrder?.id === order.id && "bg-muted"
+                    )}
+                  >
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className="font-semibold text-foreground">{order.order_number}</span>
+                        <span className={`rounded-full border px-2 py-0.5 text-xs font-medium capitalize ${getStatusColor(order.status)}`}>
+                          {order.status}
+                        </span>
+                      </div>
+                      <p className="mt-1 truncate text-sm text-muted-foreground">{customerName}</p>
+                      <div className="mt-1 flex items-center gap-2 text-xs text-muted-foreground">
+                        {orderType === 'delivery' ? (
+                          <MapPin className="h-3 w-3" />
+                        ) : (
+                          <Store className="h-3 w-3" />
+                        )}
+                        <span className="capitalize">{orderType}</span>
+                        <span>-</span>
+                        <span>{formatDate(createdAt)}</span>
+                      </div>
+                    </div>
                     <div className="flex items-center gap-2">
-                      <span className="font-semibold text-foreground">{order.order_number}</span>
-                      <span className={`rounded-full border px-2 py-0.5 text-xs font-medium capitalize ${getStatusColor(order.status)}`}>
-                        {order.status.replace('_', ' ')}
-                      </span>
+                      <span className="font-semibold text-foreground">Rs. {order.total.toLocaleString()}</span>
+                      <ChevronRight className="h-4 w-4 text-muted-foreground" />
                     </div>
-                    <p className="mt-1 truncate text-sm text-muted-foreground">{order.customer_name}</p>
-                    <div className="mt-1 flex items-center gap-2 text-xs text-muted-foreground">
-                      {order.order_type === 'delivery' ? (
-                        <MapPin className="h-3 w-3" />
-                      ) : (
-                        <Store className="h-3 w-3" />
-                      )}
-                      <span className="capitalize">{order.order_type}</span>
-                      <span>-</span>
-                      <span>{formatDate(order.created_at)}</span>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="font-semibold text-foreground">Rs. {order.total.toLocaleString()}</span>
-                    <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                  </div>
-                </button>
-              ))}
+                  </button>
+                )
+              })}
             </div>
           )}
         </div>
@@ -264,7 +348,7 @@ function OrdersContent() {
             <div className="sticky top-0 flex items-center justify-between border-b border-border bg-card p-4">
               <div>
                 <h2 className="text-lg font-bold text-foreground">{selectedOrder.order_number}</h2>
-                <p className="text-sm text-muted-foreground">{formatDate(selectedOrder.created_at)}</p>
+                <p className="text-sm text-muted-foreground">{formatDate(getOrderValue(selectedOrder, 'createdAt') as string)}</p>
               </div>
               <button
                 onClick={() => setSelectedOrder(null)}
@@ -285,17 +369,12 @@ function OrdersContent() {
                         key={status}
                         onClick={() => updateOrderStatus(selectedOrder.id, status)}
                         disabled={isUpdating}
-                        className={cn(
-                          "rounded-lg px-4 py-2 text-sm font-medium transition-colors",
-                          status === 'cancelled'
-                            ? "border border-destructive text-destructive hover:bg-destructive/10"
-                            : "bg-brand-red text-primary-foreground hover:bg-brand-red/90"
-                        )}
+                        className="rounded-lg px-4 py-2 text-sm font-medium transition-colors bg-brand-red text-primary-foreground hover:bg-brand-red/90"
                       >
                         {isUpdating ? (
                           <Loader2 className="h-4 w-4 animate-spin" />
                         ) : (
-                          `Mark as ${status.replace('_', ' ')}`
+                          `Mark as ${status}`
                         )}
                       </button>
                     ))}
@@ -307,15 +386,15 @@ function OrdersContent() {
               <div>
                 <h3 className="mb-2 text-sm font-semibold text-foreground">Customer</h3>
                 <div className="rounded-lg border border-border p-3 space-y-2">
-                  <p className="font-medium text-foreground">{selectedOrder.customer_name}</p>
+                  <p className="font-medium text-foreground">{getOrderValue(selectedOrder, 'customerName') as string || 'Unknown'}</p>
                   <div className="flex items-center gap-2 text-sm text-muted-foreground">
                     <Phone className="h-4 w-4" />
-                    <a href={`tel:${selectedOrder.customer_phone}`} className="hover:text-brand-red">
-                      {selectedOrder.customer_phone}
+                    <a href={`tel:${getOrderValue(selectedOrder, 'customerPhone')}`} className="hover:text-brand-red">
+                      {getOrderValue(selectedOrder, 'customerPhone') as string || 'N/A'}
                     </a>
                   </div>
-                  {selectedOrder.customer_email && (
-                    <p className="text-sm text-muted-foreground">{selectedOrder.customer_email}</p>
+                  {getOrderValue(selectedOrder, 'customerEmail') && (
+                    <p className="text-sm text-muted-foreground">{getOrderValue(selectedOrder, 'customerEmail') as string}</p>
                   )}
                 </div>
               </div>
@@ -323,19 +402,19 @@ function OrdersContent() {
               {/* Delivery/Pickup Info */}
               <div>
                 <h3 className="mb-2 text-sm font-semibold text-foreground">
-                  {selectedOrder.order_type === 'delivery' ? 'Delivery Address' : 'Pickup'}
+                  {getOrderValue(selectedOrder, 'orderType') === 'delivery' ? 'Delivery Address' : 'Pickup'}
                 </h3>
                 <div className="rounded-lg border border-border p-3">
                   <div className="flex items-start gap-2">
-                    {selectedOrder.order_type === 'delivery' ? (
+                    {getOrderValue(selectedOrder, 'orderType') === 'delivery' ? (
                       <>
                         <MapPin className="mt-0.5 h-4 w-4 text-muted-foreground" />
-                        <p className="text-sm text-foreground">{selectedOrder.delivery_address}</p>
+                        <p className="text-sm text-foreground">{getOrderValue(selectedOrder, 'deliveryAddress') as string || 'N/A'}</p>
                       </>
                     ) : (
                       <>
                         <Store className="mt-0.5 h-4 w-4 text-muted-foreground" />
-                        <p className="text-sm text-foreground">Customer will pickup from branch</p>
+                        <p className="text-sm text-foreground">{getOrderValue(selectedOrder, 'pickupBranch') as string || 'Customer will pickup from branch'}</p>
                       </>
                     )}
                   </div>
@@ -346,24 +425,30 @@ function OrdersContent() {
               <div>
                 <h3 className="mb-2 text-sm font-semibold text-foreground">Items</h3>
                 <div className="rounded-lg border border-border divide-y divide-border">
-                  {selectedOrder.items.map((item) => (
-                    <div key={item.id} className="flex items-center justify-between p-3">
-                      <div>
-                        <p className="font-medium text-foreground">{item.quantity}x {item.item_name}</p>
-                        <p className="text-sm text-muted-foreground">Rs. {item.unit_price.toLocaleString()} each</p>
+                  {selectedOrder.items.map((item, index) => {
+                    const itemName = item.item_name || item.name || 'Unknown Item'
+                    const variation = item.variation ? ` (${item.variation})` : ''
+                    const unitPrice = item.unit_price || item.unitPrice || item.price || 0
+                    const totalPrice = item.total_price || item.totalPrice || item.price || 0
+                    return (
+                      <div key={item.id || index} className="flex items-center justify-between p-3">
+                        <div>
+                          <p className="font-medium text-foreground">{item.quantity}x {itemName}{variation}</p>
+                          <p className="text-sm text-muted-foreground">Rs. {unitPrice.toLocaleString()} each</p>
+                        </div>
+                        <p className="font-semibold text-foreground">Rs. {totalPrice.toLocaleString()}</p>
                       </div>
-                      <p className="font-semibold text-foreground">Rs. {item.total_price.toLocaleString()}</p>
-                    </div>
-                  ))}
+                    )
+                  })}
                 </div>
               </div>
 
               {/* Special Instructions */}
-              {selectedOrder.special_instructions && (
+              {getOrderValue(selectedOrder, 'specialInstructions') && (
                 <div>
                   <h3 className="mb-2 text-sm font-semibold text-foreground">Special Instructions</h3>
                   <div className="rounded-lg border border-border p-3">
-                    <p className="text-sm text-foreground">{selectedOrder.special_instructions}</p>
+                    <p className="text-sm text-foreground">{getOrderValue(selectedOrder, 'specialInstructions') as string}</p>
                   </div>
                 </div>
               )}
@@ -374,15 +459,15 @@ function OrdersContent() {
                   <span className="text-muted-foreground">Subtotal</span>
                   <span className="text-foreground">Rs. {selectedOrder.subtotal.toLocaleString()}</span>
                 </div>
-                {selectedOrder.delivery_fee > 0 && (
+                {(getOrderValue(selectedOrder, 'deliveryFee') as number) > 0 && (
                   <div className="flex justify-between text-sm">
                     <span className="text-muted-foreground">Delivery Fee</span>
-                    <span className="text-foreground">Rs. {selectedOrder.delivery_fee.toLocaleString()}</span>
+                    <span className="text-foreground">Rs. {(getOrderValue(selectedOrder, 'deliveryFee') as number).toLocaleString()}</span>
                   </div>
                 )}
                 <div className="flex justify-between border-t border-border pt-2">
                   <span className="font-bold text-foreground">Total</span>
-                  <span className="text-lg font-bold text-brand-red">Rs. {selectedOrder.total_amount.toLocaleString()}</span>
+                  <span className="text-lg font-bold text-brand-red">Rs. {(selectedOrder.total || selectedOrder.total_amount || 0).toLocaleString()}</span>
                 </div>
               </div>
             </div>

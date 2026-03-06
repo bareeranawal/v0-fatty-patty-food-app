@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { 
@@ -15,7 +15,6 @@ import {
   LogOut
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { createClient } from '@/lib/supabase/client'
 
 const navItems = [
   { href: '/admin', label: 'Dashboard', icon: LayoutDashboard },
@@ -34,18 +33,41 @@ export default function AdminLayout({
   const router = useRouter()
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [isLoggingOut, setIsLoggingOut] = useState(false)
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null)
+
+  // Check authentication on mount and route changes
+  useEffect(() => {
+    if (pathname === '/admin/login') {
+      setIsAuthenticated(true) // Allow login page
+      return
+    }
+    
+    const isAuth = localStorage.getItem('adminAuth') === 'true'
+    if (!isAuth) {
+      router.push('/admin/login')
+    } else {
+      setIsAuthenticated(true)
+    }
+  }, [pathname, router])
 
   // Don't show sidebar on login page
   if (pathname === '/admin/login') {
     return <>{children}</>
   }
 
-  const handleLogout = async () => {
+  // Show loading while checking auth
+  if (isAuthenticated === null) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background">
+        <div className="text-muted-foreground">Loading...</div>
+      </div>
+    )
+  }
+
+  const handleLogout = () => {
     setIsLoggingOut(true)
-    const supabase = createClient()
-    await supabase.auth.signOut()
+    localStorage.removeItem('adminAuth')
     router.push('/admin/login')
-    router.refresh()
   }
 
   return (
