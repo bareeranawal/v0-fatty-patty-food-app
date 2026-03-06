@@ -1,8 +1,9 @@
 "use client"
 
+import { useState, useEffect } from 'react'
 import Image from 'next/image'
 import { Flame, Check } from 'lucide-react'
-import { deals } from '@/lib/menu-data'
+import { deals as defaultDeals } from '@/lib/menu-data'
 import type { Deal } from '@/lib/menu-data'
 
 interface PromotionsProps {
@@ -10,6 +11,35 @@ interface PromotionsProps {
 }
 
 export function Promotions({ onDealClick }: PromotionsProps) {
+  const [deals, setDeals] = useState<Deal[]>(defaultDeals)
+
+  // Load deals from localStorage
+  useEffect(() => {
+    const loadDeals = () => {
+      const storedDeals = localStorage.getItem('deals')
+      if (storedDeals) {
+        try {
+          const parsedDeals = JSON.parse(storedDeals)
+          if (parsedDeals.length > 0) {
+            setDeals(parsedDeals)
+          }
+        } catch (error) {
+          console.error('Error loading deals from localStorage:', error)
+        }
+      }
+    }
+    
+    loadDeals()
+    
+    // Listen for storage changes
+    window.addEventListener('storage', loadDeals)
+    return () => window.removeEventListener('storage', loadDeals)
+  }, [])
+
+  if (deals.length === 0) {
+    return null
+  }
+
   return (
     <section id="deals" className="bg-muted/50 py-14 lg:py-20">
       <div className="mx-auto max-w-7xl px-4 lg:px-8">

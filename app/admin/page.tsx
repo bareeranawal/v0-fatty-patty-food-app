@@ -21,13 +21,17 @@ interface Stats {
 }
 
 interface Order {
-  id: string
+  id: string | number
   order_number: string
-  customer_name: string
+  customer_name?: string
+  customerName?: string
   status: string
-  total_amount: number
-  order_type: string
-  created_at: string
+  total_amount?: number
+  total?: number
+  order_type?: string
+  orderType?: string
+  created_at?: string
+  createdAt?: string
 }
 
 export default function AdminDashboard() {
@@ -38,16 +42,61 @@ export default function AdminDashboard() {
   const fetchData = async () => {
     setIsLoading(true)
     try {
-      const [statsRes, ordersRes] = await Promise.all([
-        fetch('/api/admin/stats'),
-        fetch('/api/admin/orders?limit=5'),
-      ])
-
-      const statsData = await statsRes.json()
-      const ordersData = await ordersRes.json()
-
-      if (statsData.data) setStats(statsData.data)
-      if (ordersData.data) setRecentOrders(ordersData.data)
+      // Get orders from localStorage
+      const orders = JSON.parse(localStorage.getItem('orders') || '[]')
+      
+      // Calculate today's date
+      const today = new Date().toDateString()
+      
+      // Filter today's orders
+      const todaysOrders = orders.filter((order: Order) => {
+        const orderDate = new Date(order.created_at || order.createdAt || '').toDateString()
+        return orderDate === today
+      })
+      
+      // Calculate today's revenue
+      const todaysRevenue = todaysOrders.reduce((total: number, order: Order) => {
+        return total + (order.total_amount || order.total || 0)
+      }, 0)
+      
+      // Count pending orders
+      const pendingOrders = orders.filter((order: Order) => 
+        (order.status || '').toLowerCase() === 'pending'
+      ).length
+      
+      // Total orders
+      const totalOrders = orders.length
+      
+      // Set stats
+      setStats({
+        todayRevenue: todaysRevenue,
+        todayOrders: todaysOrders.length,
+        pendingOrders: pendingOrders,
+        totalOrders: totalOrders,
+        completedToday: todaysOrders.filter((o: Order) => 
+          (o.status || '').toLowerCase() === 'delivered'
+        ).length,
+      })
+      
+      // Get recent orders (sorted by date, newest first)
+      const sortedOrders = [...orders].sort((a: Order, b: Order) => {
+        const dateA = new Date(a.created_at || a.createdAt || 0)
+        const dateB = new Date(b.created_at || b.createdAt || 0)
+        return dateB.getTime() - dateA.getTime()
+      }).slice(0, 5)
+      
+      // Normalize order format for display
+      const normalizedOrders = sortedOrders.map((order: Order) => ({
+        id: String(order.id),
+        order_number: order.order_number,
+        customer_name: order.customer_name || order.customerName || 'Unknown',
+        status: order.status || 'pending',
+        total_amount: order.total_amount || order.total || 0,
+        order_type: order.order_type || order.orderType || 'delivery',
+        created_at: order.created_at || order.createdAt || new Date().toISOString(),
+      }))
+      
+      setRecentOrders(normalizedOrders)
     } catch (error) {
       console.error('Error fetching dashboard data:', error)
     } finally {

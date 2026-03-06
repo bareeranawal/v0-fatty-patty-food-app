@@ -37,6 +37,19 @@ export default function AdminDealsPage() {
       const data = await response.json()
       if (data.data?.deals) {
         setDeals(data.data.deals)
+        
+        // Sync deals to localStorage for customer website
+        const dealsForStorage = data.data.deals
+          .filter((deal: Deal) => deal.is_active)
+          .map((deal: Deal) => ({
+            id: deal.id,
+            name: deal.name,
+            title: deal.description || deal.name,
+            items: [], // API doesn't provide items list, would need to be added
+            price: deal.fixed_price || 0,
+            image: deal.image_url || '/images/deals.jpg',
+          }))
+        localStorage.setItem('deals', JSON.stringify(dealsForStorage))
       }
     } catch (error) {
       console.error('Error fetching deals:', error)
@@ -62,12 +75,26 @@ export default function AdminDealsPage() {
       const data = await response.json()
       if (data.error) throw new Error(data.error)
 
-      setDeals(prev => prev.map(deal => 
+      const updatedDeals = deals.map(deal => 
         deal.id === id ? { ...deal, is_active: !currentStatus } : deal
-      ))
+      )
+      setDeals(updatedDeals)
+
+      // Sync to localStorage
+      const dealsForStorage = updatedDeals
+        .filter(deal => deal.is_active)
+        .map(deal => ({
+          id: deal.id,
+          name: deal.name,
+          title: deal.description || deal.name,
+          items: [],
+          price: deal.fixed_price || 0,
+          image: deal.image_url || '/images/deals.jpg',
+        }))
+      localStorage.setItem('deals', JSON.stringify(dealsForStorage))
 
       toast.success(`Deal ${!currentStatus ? 'activated' : 'deactivated'}`)
-    } catch (error) {
+    } catch {
       toast.error('Failed to update deal status')
     } finally {
       setTogglingId(null)

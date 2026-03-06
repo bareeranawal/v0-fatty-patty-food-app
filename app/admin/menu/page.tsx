@@ -78,6 +78,21 @@ export default function AdminMenuPage() {
       if (data.data) {
         setCategories(data.data.categories)
         setItems(data.data.items)
+        
+        // Sync products to localStorage for customer menu
+        const productsForStorage = data.data.items.map((item: MenuItem) => ({
+          id: item.id,
+          name: item.name,
+          description: item.description,
+          price: item.price,
+          category: item.category?.name || item.category_id,
+          category_id: item.category_id,
+          image: item.image_url || '/images/placeholder.jpg',
+          image_url: item.image_url,
+          is_available: item.is_available,
+          rating: 4.5,
+        }))
+        localStorage.setItem('products', JSON.stringify(productsForStorage))
       }
     } catch (error) {
       console.error('Error fetching menu:', error)
@@ -201,15 +216,33 @@ export default function AdminMenuPage() {
       const data = await response.json()
       if (data.error) throw new Error(data.error)
 
+      let updatedItems: MenuItem[]
       if (editingItem) {
-        setItems(prev => prev.map(item => 
+        updatedItems = items.map(item => 
           item.id === editingItem.id ? data.data : item
-        ))
+        )
+        setItems(updatedItems)
         toast.success('Menu item updated successfully')
       } else {
-        setItems(prev => [...prev, data.data])
+        updatedItems = [...items, data.data]
+        setItems(updatedItems)
         toast.success('Menu item created successfully')
       }
+
+      // Also save to localStorage for customer menu sync
+      const productsForStorage = updatedItems.map(item => ({
+        id: item.id,
+        name: item.name,
+        description: item.description,
+        price: item.price,
+        category: item.category?.name || item.category_id,
+        category_id: item.category_id,
+        image: item.image_url || '/images/placeholder.jpg',
+        image_url: item.image_url,
+        is_available: item.is_available,
+        rating: 4.5,
+      }))
+      localStorage.setItem('products', JSON.stringify(productsForStorage))
 
       setShowModal(false)
       setFormData(initialFormData)
@@ -230,7 +263,24 @@ export default function AdminMenuPage() {
       const data = await response.json()
       if (data.error) throw new Error(data.error)
 
-      setItems(prev => prev.filter(item => item.id !== id))
+      const updatedItems = items.filter(item => item.id !== id)
+      setItems(updatedItems)
+      
+      // Sync to localStorage
+      const productsForStorage = updatedItems.map(item => ({
+        id: item.id,
+        name: item.name,
+        description: item.description,
+        price: item.price,
+        category: item.category?.name || item.category_id,
+        category_id: item.category_id,
+        image: item.image_url || '/images/placeholder.jpg',
+        image_url: item.image_url,
+        is_available: item.is_available,
+        rating: 4.5,
+      }))
+      localStorage.setItem('products', JSON.stringify(productsForStorage))
+      
       toast.success('Menu item deleted successfully')
       setDeleteConfirm(null)
     } catch {

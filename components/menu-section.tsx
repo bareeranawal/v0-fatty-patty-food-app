@@ -4,7 +4,7 @@ import { useState, useMemo, useEffect } from 'react'
 import Image from 'next/image'
 import { useSearchParams } from 'next/navigation'
 import { Star, Plus } from 'lucide-react'
-import { menuItems, categories } from '@/lib/menu-data'
+import { menuItems as defaultMenuItems, categories } from '@/lib/menu-data'
 import type { MenuItem } from '@/lib/menu-data'
 import { useCart } from '@/lib/cart-context'
 import { toast } from 'sonner'
@@ -18,7 +18,44 @@ export function MenuSection({ onItemClick }: MenuSectionProps) {
   const searchParams = useSearchParams()
   const initialCategory = searchParams.get('category') || 'all'
   const [activeCategory, setActiveCategory] = useState<string>(initialCategory)
+  const [menuItems, setMenuItems] = useState<MenuItem[]>(defaultMenuItems)
   const { addItem } = useCart()
+
+  // Load products from localStorage
+  useEffect(() => {
+    const loadProducts = () => {
+      const storedProducts = localStorage.getItem('products')
+      if (storedProducts) {
+        try {
+          const products = JSON.parse(storedProducts)
+          // Convert stored products to MenuItem format
+          const convertedProducts: MenuItem[] = products
+            .filter((p: Record<string, unknown>) => p.is_available !== false)
+            .map((p: Record<string, unknown>) => ({
+              id: p.id as string,
+              name: p.name as string,
+              description: (p.description as string) || '',
+              price: p.price as number,
+              category: (p.category_id as string) || (p.category as string) || 'other',
+              image: (p.image as string) || (p.image_url as string) || '/images/placeholder.jpg',
+              rating: (p.rating as number) || 4.5,
+              popular: false,
+            }))
+          if (convertedProducts.length > 0) {
+            setMenuItems(convertedProducts)
+          }
+        } catch (error) {
+          console.error('Error loading products from localStorage:', error)
+        }
+      }
+    }
+    
+    loadProducts()
+    
+    // Listen for storage changes (when admin updates products)
+    window.addEventListener('storage', loadProducts)
+    return () => window.removeEventListener('storage', loadProducts)
+  }, [])
 
   useEffect(() => {
     const cat = searchParams.get('category')
