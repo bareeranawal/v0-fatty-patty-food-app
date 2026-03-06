@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState, Suspense } from 'react'
+import { useEffect, useState, Suspense, useCallback } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { 
   Search, 
@@ -12,10 +12,14 @@ import {
   X,
   Loader2,
   RefreshCw,
-  ChevronRight
+  ChevronRight,
+  Bell,
+  Wifi,
+  WifiOff
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
+import { useRealtimeOrders } from '@/hooks/use-realtime-orders'
 
 interface OrderItem {
   id: string
@@ -70,6 +74,29 @@ function OrdersContent() {
   const [searchQuery, setSearchQuery] = useState('')
   const [isLoading, setIsLoading] = useState(true)
   const [isUpdating, setIsUpdating] = useState(false)
+
+  const handleNewOrder = useCallback((newOrder: Order) => {
+    toast.success(`New order received: ${newOrder.order_number}`, {
+      description: `${newOrder.customer_name} - Rs. ${newOrder.total_amount.toLocaleString()}`,
+      duration: 5000,
+    })
+    // Add to orders list at the top
+    setOrders(prev => [{ ...newOrder, items: [] }, ...prev])
+  }, [])
+
+  const handleOrderUpdate = useCallback((updatedOrder: Order) => {
+    setOrders(prev => prev.map(o => 
+      o.id === updatedOrder.id ? { ...o, ...updatedOrder } : o
+    ))
+    if (selectedOrder?.id === updatedOrder.id) {
+      setSelectedOrder(prev => prev ? { ...prev, ...updatedOrder } : null)
+    }
+  }, [selectedOrder?.id])
+
+  const { newOrderCount, clearNewOrderCount, isConnected } = useRealtimeOrders({
+    onNewOrder: handleNewOrder,
+    onOrderUpdate: handleOrderUpdate,
+  })
 
   const fetchOrders = async () => {
     setIsLoading(true)
@@ -162,14 +189,49 @@ function OrdersContent() {
       <div className="flex w-full flex-col lg:w-1/2">
         {/* Header */}
         <div className="mb-4 flex items-center justify-between">
-          <h1 className="text-2xl font-bold text-foreground">Orders</h1>
-          <button
-            onClick={fetchOrders}
-            disabled={isLoading}
-            className="flex items-center gap-2 rounded-lg border border-border px-3 py-2 text-sm text-muted-foreground hover:bg-muted"
-          >
-            <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
-          </button>
+          <div className="flex items-center gap-3">
+            <h1 className="text-2xl font-bold text-foreground">Orders</h1>
+            {newOrderCount > 0 && (
+              <button
+                onClick={() => {
+                  clearNewOrderCount()
+                  fetchOrders()
+                }}
+                className="flex items-center gap-1.5 rounded-full bg-brand-red px-3 py-1 text-xs font-semibold text-white animate-pulse"
+              >
+                <Bell className="h-3.5 w-3.5" />
+                {newOrderCount} new
+              </button>
+            )}
+          </div>
+          <div className="flex items-center gap-2">
+            {/* Connection Status */}
+            <div className={cn(
+              "flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium",
+              isConnected 
+                ? "bg-green-100 text-green-700" 
+                : "bg-yellow-100 text-yellow-700"
+            )}>
+              {isConnected ? (
+                <>
+                  <Wifi className="h-3 w-3" />
+                  Live
+                </>
+              ) : (
+                <>
+                  <WifiOff className="h-3 w-3" />
+                  Connecting...
+                </>
+              )}
+            </div>
+            <button
+              onClick={fetchOrders}
+              disabled={isLoading}
+              className="flex items-center gap-2 rounded-lg border border-border px-3 py-2 text-sm text-muted-foreground hover:bg-muted"
+            >
+              <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
+            </button>
+          </div>
         </div>
 
         {/* Filters */}

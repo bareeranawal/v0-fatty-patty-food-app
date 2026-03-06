@@ -1,15 +1,16 @@
 "use client"
 
 import Image from 'next/image'
-import { Flame, Check } from 'lucide-react'
-import { deals } from '@/lib/menu-data'
-import type { Deal } from '@/lib/menu-data'
+import { Flame, Check, Loader2 } from 'lucide-react'
+import { useMenu, type Deal } from '@/lib/menu-context'
 
 interface PromotionsProps {
   onDealClick: (deal: Deal) => void
 }
 
 export function Promotions({ onDealClick }: PromotionsProps) {
+  const { deals, isLoading } = useMenu()
+
   return (
     <section id="deals" className="bg-muted/50 py-14 lg:py-20">
       <div className="mx-auto max-w-7xl px-4 lg:px-8">
@@ -22,6 +23,13 @@ export function Promotions({ onDealClick }: PromotionsProps) {
           </h2>
         </div>
 
+        {isLoading ? (
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="h-8 w-8 animate-spin text-[#C1121F]" />
+          </div>
+        ) : deals.length === 0 ? (
+          <div className="py-12 text-center text-muted-foreground">No deals available</div>
+        ) : (
         <div className="grid gap-5 sm:grid-cols-2">
           {deals.map((deal) => (
             <button
@@ -67,6 +75,7 @@ export function Promotions({ onDealClick }: PromotionsProps) {
             </button>
           ))}
         </div>
+        )}
       </div>
     </section>
   )

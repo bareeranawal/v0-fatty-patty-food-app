@@ -1,9 +1,8 @@
 "use client"
 
 import Image from 'next/image'
-import { Star, Plus } from 'lucide-react'
-import { popularItems } from '@/lib/menu-data'
-import type { MenuItem } from '@/lib/menu-data'
+import { Star, Plus, Loader2 } from 'lucide-react'
+import { useMenu, type MenuItem } from '@/lib/menu-context'
 import { useCart } from '@/lib/cart-context'
 import { toast } from 'sonner'
 
@@ -13,6 +12,7 @@ interface PopularItemsProps {
 
 export function PopularItems({ onItemClick }: PopularItemsProps) {
   const { addItem } = useCart()
+  const { popularItems, isLoading } = useMenu()
 
   const handleQuickAdd = (e: React.MouseEvent, item: MenuItem) => {
     e.stopPropagation()
@@ -32,6 +32,13 @@ export function PopularItems({ onItemClick }: PopularItemsProps) {
           </h2>
         </div>
 
+        {isLoading ? (
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="h-8 w-8 animate-spin text-[#C1121F]" />
+          </div>
+        ) : popularItems.length === 0 ? (
+          <div className="py-12 text-center text-muted-foreground">No popular items available</div>
+        ) : (
         <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {popularItems.map((item) => (
             <div
@@ -78,6 +85,7 @@ export function PopularItems({ onItemClick }: PopularItemsProps) {
             </div>
           ))}
         </div>
+        )}
       </div>
     </section>
   )

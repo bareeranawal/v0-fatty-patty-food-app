@@ -8,7 +8,7 @@ import { CartDrawer } from '@/components/cart-drawer'
 import { ProductModal } from '@/components/product-modal'
 import { WelcomeScreen } from '@/components/welcome-screen'
 import { useOrder } from '@/lib/order-context'
-import type { MenuItem } from '@/lib/menu-data'
+import type { MenuItem } from '@/lib/menu-context'
 
 export default function MenuPage() {
   const [selectedItem, setSelectedItem] = useState<MenuItem | null>(null)

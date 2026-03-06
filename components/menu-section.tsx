@@ -3,9 +3,8 @@
 import { useState, useMemo, useEffect } from 'react'
 import Image from 'next/image'
 import { useSearchParams } from 'next/navigation'
-import { Star, Plus } from 'lucide-react'
-import { menuItems, categories } from '@/lib/menu-data'
-import type { MenuItem } from '@/lib/menu-data'
+import { Star, Plus, Loader2 } from 'lucide-react'
+import { useMenu, type MenuItem } from '@/lib/menu-context'
 import { useCart } from '@/lib/cart-context'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
@@ -19,6 +18,7 @@ export function MenuSection({ onItemClick }: MenuSectionProps) {
   const initialCategory = searchParams.get('category') || 'all'
   const [activeCategory, setActiveCategory] = useState<string>(initialCategory)
   const { addItem } = useCart()
+  const { menuItems, categories, isLoading } = useMenu()
 
   useEffect(() => {
     const cat = searchParams.get('category')
@@ -65,6 +65,12 @@ export function MenuSection({ onItemClick }: MenuSectionProps) {
           </h2>
         </div>
 
+        {isLoading ? (
+          <div className="flex items-center justify-center py-20">
+            <Loader2 className="h-10 w-10 animate-spin text-[#C1121F]" />
+          </div>
+        ) : (
+        <>
         {/* Sticky Category Filter */}
         <div className="sticky top-14 z-30 -mx-4 mb-8 border-b border-border bg-background/95 px-4 py-3 backdrop-blur-md">
           <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
@@ -160,6 +166,8 @@ export function MenuSection({ onItemClick }: MenuSectionProps) {
           <div className="py-16 text-center">
             <p className="text-lg text-muted-foreground">No items found. Try a different category.</p>
           </div>
+        )}
+        </>
         )}
       </div>
     </section>

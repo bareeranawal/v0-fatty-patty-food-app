@@ -4,6 +4,7 @@ import { Analytics } from '@vercel/analytics/next'
 import { ThemeProvider } from 'next-themes'
 import { CartProvider } from '@/lib/cart-context'
 import { OrderProvider } from '@/lib/order-context'
+import { MenuProvider } from '@/lib/menu-context'
 import { Toaster } from 'sonner'
 import './globals.css'
 
@@ -36,10 +37,12 @@ export default function RootLayout({
       <body className="font-sans antialiased">
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false}>
           <OrderProvider>
-            <CartProvider>
-              {children}
-              <Toaster position="bottom-right" richColors />
-            </CartProvider>
+            <MenuProvider>
+              <CartProvider>
+                {children}
+                <Toaster position="bottom-right" richColors />
+              </CartProvider>
+            </MenuProvider>
           </OrderProvider>
         </ThemeProvider>
         <Analytics />

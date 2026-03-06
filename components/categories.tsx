@@ -2,10 +2,12 @@
 
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
-import { categories } from '@/lib/menu-data'
+import { useMenu } from '@/lib/menu-context'
+import { Loader2 } from 'lucide-react'
 
 export function Categories() {
   const router = useRouter()
+  const { categories, isLoading } = useMenu()
 
   const handleClick = (categoryId: string) => {
     router.push(`/menu?category=${categoryId}`)
@@ -23,6 +25,11 @@ export function Categories() {
           </h2>
         </div>
 
+        {isLoading ? (
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="h-8 w-8 animate-spin text-[#C1121F]" />
+          </div>
+        ) : (
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7">
           {categories.map((category, i) => (
             <button
@@ -48,6 +55,7 @@ export function Categories() {
             </button>
           ))}
         </div>
+        )}
       </div>
     </section>
   )

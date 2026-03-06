@@ -15,7 +15,7 @@ import { ProductModal } from '@/components/product-modal'
 import { DealModal } from '@/components/deal-modal'
 import { WelcomeScreen } from '@/components/welcome-screen'
 import { useOrder } from '@/lib/order-context'
-import type { MenuItem, Deal } from '@/lib/menu-data'
+import type { MenuItem, Deal } from '@/lib/menu-context'
 
 export default function HomePage() {
   const [selectedItem, setSelectedItem] = useState<MenuItem | null>(null)
