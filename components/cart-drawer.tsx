@@ -2,8 +2,8 @@
 
 import { useState } from 'react'
 import Image from 'next/image'
-import { X, Plus, Minus, Trash2, ShoppingBag } from 'lucide-react'
-import { useCart } from '@/lib/cart-context'
+import { X, Plus, Minus, Trash2, ShoppingBag, Tag } from 'lucide-react'
+import { useCart, type CartItem } from '@/lib/cart-context'
 import { useOrder } from '@/lib/order-context'
 import { menuItems } from '@/lib/menu-data'
 import type { MenuItem } from '@/lib/menu-data'
@@ -22,21 +22,48 @@ export function CartDrawer({ onItemClick }: CartDrawerProps) {
   const deliveryFee = orderType === 'delivery' && subtotal > 0 ? 150 : 0
   const total = subtotal + deliveryFee
 
-  const handleItemClick = (cartItem: { menuItem: MenuItem }) => {
-    // For deals (category === 'deals'), we don't re-open modal since they use DealModal
-    if (cartItem.menuItem.category === 'deals') return
-    const menuItem = menuItems.find((m) => m.id === cartItem.menuItem.id)
-    if (menuItem && onItemClick) {
-      setIsCartOpen(false)
-      onItemClick(menuItem)
+  const handleItemClick = (cartItem: CartItem) => {
+    // For deals, we don't re-open modal since they use DealModal
+    if (cartItem.type === 'deal') return
+    
+    if (cartItem.menuItem) {
+      const menuItem = menuItems.find((m) => m.id === cartItem.menuItem?.id)
+      if (menuItem && onItemClick) {
+        setIsCartOpen(false)
+        onItemClick(menuItem)
+      }
     }
+  }
+
+  const getItemImage = (item: CartItem) => {
+    if (item.type === 'deal' && item.deal) {
+      return item.deal.image
+    }
+    return item.menuItem?.image || '/images/placeholder.jpg'
+  }
+
+  const getItemName = (item: CartItem) => {
+    if (item.type === 'deal' && item.deal) {
+      return `${item.deal.name} - ${item.deal.title}`
+    }
+    return item.menuItem?.name || 'Unknown Item'
+  }
+
+  const getItemDetails = (item: CartItem) => {
+    if (item.type === 'deal' && item.dealSelections && item.dealSelections.length > 0) {
+      return item.dealSelections.map(s => s.drinkName).join(', ')
+    }
+    if (item.addOns.length > 0) {
+      return item.addOns.map(a => a.name).join(', ')
+    }
+    return null
   }
 
   return (
     <>
       <div
         className={cn(
-          'fixed inset-0 z-50 bg-[#1a1a1a]/50 backdrop-blur-sm transition-opacity duration-300',
+          'fixed inset-0 z-50 bg-brand-dark/50 backdrop-blur-sm transition-opacity duration-300',
           isCartOpen ? 'pointer-events-auto opacity-100' : 'pointer-events-none opacity-0'
         )}
         onClick={() => setIsCartOpen(false)}
@@ -50,10 +77,10 @@ export function CartDrawer({ onItemClick }: CartDrawerProps) {
       >
         <div className="flex items-center justify-between border-b border-border p-5">
           <div className="flex items-center gap-3">
-            <ShoppingBag className="h-5 w-5 text-[#C1121F]" />
+            <ShoppingBag className="h-5 w-5 text-brand-red" />
             <h2 className="text-lg font-bold text-foreground">Your Cart</h2>
             {totalItems > 0 && (
-              <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[#C1121F] text-xs font-bold text-white">
+              <span className="flex h-6 w-6 items-center justify-center rounded-full bg-brand-red text-xs font-bold text-primary-foreground">
                 {totalItems}
               </span>
             )}
@@ -76,54 +103,63 @@ export function CartDrawer({ onItemClick }: CartDrawerProps) {
             </div>
           ) : (
             <div className="space-y-4">
-              {items.map((item, index) => {
-                const addOnTotal = item.addOns.reduce((sum, addon) => sum + addon.price, 0)
-                const itemTotal = (item.menuItem.price + addOnTotal) * item.quantity
+              {items.map((item) => {
+                const details = getItemDetails(item)
 
                 return (
                   <div
-                    key={`${item.menuItem.id}-${index}`}
-                    className="flex gap-3 rounded-xl border border-border bg-background p-3 transition-all duration-200 hover:border-[#C1121F]/30"
+                    key={item.id}
+                    className="flex gap-3 rounded-xl border border-border bg-background p-3 transition-all duration-200 hover:border-brand-red/30"
                   >
                     <button
                       onClick={() => handleItemClick(item)}
                       className="relative h-16 w-16 flex-shrink-0 overflow-hidden rounded-lg"
-                      aria-label={`View ${item.menuItem.name}`}
+                      aria-label={`View ${getItemName(item)}`}
+                      disabled={item.type === 'deal'}
                     >
                       <Image
-                        src={item.menuItem.image}
-                        alt={item.menuItem.name}
+                        src={getItemImage(item)}
+                        alt={getItemName(item)}
                         fill
                         className="object-cover"
                       />
+                      {item.type === 'deal' && (
+                        <div className="absolute inset-0 flex items-center justify-center bg-brand-red/80">
+                          <Tag className="h-5 w-5 text-primary-foreground" />
+                        </div>
+                      )}
                     </button>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-start justify-between gap-2">
                         <button
                           onClick={() => handleItemClick(item)}
                           className="text-left"
+                          disabled={item.type === 'deal'}
                         >
-                          <h4 className="text-sm font-bold text-foreground truncate hover:text-[#C1121F] transition-colors">
-                            {item.menuItem.name}
+                          <h4 className={cn(
+                            "text-sm font-bold text-foreground truncate transition-colors",
+                            item.type !== 'deal' && "hover:text-brand-red"
+                          )}>
+                            {getItemName(item)}
                           </h4>
                         </button>
                         <button
-                          onClick={() => removeItem(index)}
+                          onClick={() => removeItem(item.id)}
                           className="flex-shrink-0 text-muted-foreground transition-colors hover:text-destructive"
-                          aria-label={`Remove ${item.menuItem.name}`}
+                          aria-label={`Remove ${getItemName(item)}`}
                         >
                           <Trash2 className="h-4 w-4" />
                         </button>
                       </div>
-                      {item.addOns.length > 0 && (
+                      {details && (
                         <p className="text-xs text-muted-foreground truncate">
-                          + {item.addOns.map((a) => a.name).join(', ')}
+                          + {details}
                         </p>
                       )}
                       <div className="mt-2 flex items-center justify-between">
                         <div className="flex items-center gap-2">
                           <button
-                            onClick={() => updateQuantity(index, item.quantity - 1)}
+                            onClick={() => updateQuantity(item.id, item.quantity - 1)}
                             className="flex h-7 w-7 items-center justify-center rounded-full border border-border text-foreground transition-colors hover:bg-muted"
                             aria-label="Decrease quantity"
                           >
@@ -133,15 +169,15 @@ export function CartDrawer({ onItemClick }: CartDrawerProps) {
                             {item.quantity}
                           </span>
                           <button
-                            onClick={() => updateQuantity(index, item.quantity + 1)}
+                            onClick={() => updateQuantity(item.id, item.quantity + 1)}
                             className="flex h-7 w-7 items-center justify-center rounded-full border border-border text-foreground transition-colors hover:bg-muted"
                             aria-label="Increase quantity"
                           >
                             <Plus className="h-3 w-3" />
                           </button>
                         </div>
-                        <span className="text-sm font-bold text-[#C1121F]">
-                          Rs. {itemTotal.toLocaleString()}
+                        <span className="text-sm font-bold text-brand-red">
+                          Rs. {item.totalPrice.toLocaleString()}
                         </span>
                       </div>
                     </div>
@@ -167,7 +203,7 @@ export function CartDrawer({ onItemClick }: CartDrawerProps) {
               </div>
               <div className="flex items-center justify-between border-t border-border pt-2">
                 <span className="font-bold text-foreground">Total</span>
-                <span className="text-lg font-bold text-[#C1121F]">Rs. {total.toLocaleString()}</span>
+                <span className="text-lg font-bold text-brand-red">Rs. {total.toLocaleString()}</span>
               </div>
             </div>
             <button
@@ -175,7 +211,7 @@ export function CartDrawer({ onItemClick }: CartDrawerProps) {
                 setShowCheckout(true)
                 setIsCartOpen(false)
               }}
-              className="w-full rounded-xl bg-[#C1121F] py-3.5 text-sm font-semibold text-white transition-all hover:bg-[#C1121F]/90 active:scale-[0.98]"
+              className="w-full rounded-xl bg-brand-red py-3.5 text-sm font-semibold text-primary-foreground transition-all hover:bg-brand-red/90 active:scale-[0.98]"
             >
               Proceed to Checkout
             </button>

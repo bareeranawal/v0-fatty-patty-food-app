@@ -6,7 +6,7 @@ const quickLinks = [
   { name: 'Home', href: '/' },
   { name: 'Menu', href: '/menu' },
   { name: 'Deals', href: '/#offers' },
-  { name: 'Reviews', href: '/#reviews' },
+  { name: 'Track Order', href: '/track' },
   { name: 'Contact', href: '/#contact' },
 ]
 
@@ -130,10 +130,16 @@ export function Footer() {
           </div>
         </div>
 
-        <div className="mt-10 border-t border-neutral-800 pt-8 text-center">
+        <div className="mt-10 border-t border-neutral-800 pt-8 flex flex-col sm:flex-row items-center justify-between gap-4">
           <p className="text-xs text-neutral-500">
             {"© "}{new Date().getFullYear()}{" Fatty Patty. All rights reserved. Original Taste Since 2020."}
           </p>
+          <Link 
+            href="/admin" 
+            className="text-xs text-neutral-600 hover:text-neutral-400 transition-colors"
+          >
+            Admin Panel
+          </Link>
         </div>
       </div>
     </footer>

@@ -23,8 +23,8 @@ const navLinks: NavLink[] = [
   { name: 'Home', href: '/', type: 'route' },
   { name: 'Menu', href: '/menu', type: 'route' },
   { name: 'Deals', href: '/#deals', type: 'scroll', scrollTarget: 'deals' },
+  { name: 'Track Order', href: '/track', type: 'route' },
   { name: 'About Us', href: '#about', type: 'modal' },
-  { name: 'Contact', href: '/#contact', type: 'scroll', scrollTarget: 'contact' },
 ]
 
 interface NavbarProps {
