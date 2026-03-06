@@ -19,6 +19,7 @@ import { cn } from '@/lib/utils'
 const navItems = [
   { href: '/admin', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/admin/orders', label: 'Orders', icon: ShoppingBag },
+  { href: '/admin/categories', label: 'Categories', icon: UtensilsCrossed },
   { href: '/admin/menu', label: 'Menu', icon: UtensilsCrossed },
   { href: '/admin/deals', label: 'Deals', icon: Tag },
   { href: '/admin/settings', label: 'Settings', icon: Settings },

@@ -21,14 +21,38 @@ export function MenuSection({ onItemClick }: MenuSectionProps) {
   const [menuItems, setMenuItems] = useState<MenuItem[]>(defaultMenuItems)
   const { addItem } = useCart()
 
-  // Load products from localStorage
+  // Load products from API with localStorage fallback
   useEffect(() => {
-    const loadProducts = () => {
+    const loadProducts = async () => {
+      try {
+        // Try to fetch from API first
+        const response = await fetch('/api/menu')
+        const data = await response.json()
+        
+        if (data.data?.items && data.data.items.length > 0) {
+          // Convert API items to MenuItem format
+          const convertedProducts: MenuItem[] = data.data.items.map((item: Record<string, unknown>) => ({
+            id: item.id as string,
+            name: item.name as string,
+            description: (item.description as string) || '',
+            price: item.price as number,
+            category: item.category ? (item.category as any).id : 'other',
+            image: (item.image_url as string) || '/images/placeholder.jpg',
+            rating: 4.5,
+            popular: (item.is_featured as boolean) || false,
+          }))
+          setMenuItems(convertedProducts)
+          return
+        }
+      } catch (error) {
+        console.error('[v0] Error fetching from API, falling back to localStorage:', error)
+      }
+      
+      // Fallback to localStorage if API fails
       const storedProducts = localStorage.getItem('products')
       if (storedProducts) {
         try {
           const products = JSON.parse(storedProducts)
-          // Convert stored products to MenuItem format
           const convertedProducts: MenuItem[] = products
             .filter((p: Record<string, unknown>) => p.is_available !== false)
             .map((p: Record<string, unknown>) => ({
@@ -52,22 +76,10 @@ export function MenuSection({ onItemClick }: MenuSectionProps) {
     
     loadProducts()
     
-    // Listen for storage changes - both from other tabs and same-tab sync
-    const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === 'products' || e.key === null) {
-        loadProducts()
-      }
-    }
+    // Set up interval to refresh from API every 30 seconds
+    const interval = setInterval(loadProducts, 30000)
     
-    window.addEventListener('storage', handleStorageChange)
-    
-    // Also reload when window gets focus (same tab scenario)
-    window.addEventListener('focus', loadProducts)
-    
-    return () => {
-      window.removeEventListener('storage', handleStorageChange)
-      window.removeEventListener('focus', loadProducts)
-    }
+    return () => clearInterval(interval)
   }, [])
 
   useEffect(() => {

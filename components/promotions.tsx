@@ -13,9 +13,36 @@ interface PromotionsProps {
 export function Promotions({ onDealClick }: PromotionsProps) {
   const [deals, setDeals] = useState<Deal[]>(defaultDeals)
 
-  // Load deals from localStorage
+  // Load deals from API with localStorage fallback
   useEffect(() => {
-    const loadDeals = () => {
+    const loadDeals = async () => {
+      try {
+        // Try to fetch from API first
+        const response = await fetch('/api/menu')
+        const data = await response.json()
+        
+        if (data.data?.deals && data.data.deals.length > 0) {
+          // Convert API deals to Deal format
+          const convertedDeals: Deal[] = data.data.deals
+            .filter((d: Record<string, unknown>) => d.is_active)
+            .map((d: Record<string, unknown>) => ({
+              id: d.id as string,
+              name: d.name as string,
+              title: (d.description as string) || (d.name as string),
+              image: (d.image_url as string) || '/images/deals.jpg',
+              price: (d.fixed_price as number) || 0,
+              items: [], // API doesn't provide items array, would need separate query
+            }))
+          if (convertedDeals.length > 0) {
+            setDeals(convertedDeals)
+            return
+          }
+        }
+      } catch (error) {
+        console.error('[v0] Error fetching deals from API, falling back to localStorage:', error)
+      }
+      
+      // Fallback to localStorage if API fails
       const storedDeals = localStorage.getItem('deals')
       if (storedDeals) {
         try {
@@ -31,22 +58,10 @@ export function Promotions({ onDealClick }: PromotionsProps) {
     
     loadDeals()
     
-    // Listen for storage changes - both from other tabs and same-tab sync
-    const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === 'deals' || e.key === null) {
-        loadDeals()
-      }
-    }
+    // Set up interval to refresh from API every 30 seconds
+    const interval = setInterval(loadDeals, 30000)
     
-    window.addEventListener('storage', handleStorageChange)
-    
-    // Also reload when window gets focus
-    window.addEventListener('focus', loadDeals)
-    
-    return () => {
-      window.removeEventListener('storage', handleStorageChange)
-      window.removeEventListener('focus', loadDeals)
-    }
+    return () => clearInterval(interval)
   }, [])
 
   if (deals.length === 0) {
