@@ -14,6 +14,7 @@ import { CartDrawer } from '@/components/cart-drawer'
 import { ProductModal } from '@/components/product-modal'
 import { DealModal } from '@/components/deal-modal'
 import { WelcomeScreen } from '@/components/welcome-screen'
+import { WhatsAppButton } from '@/components/whatsapp-button'
 import { useOrder } from '@/lib/order-context'
 import type { MenuItem, Deal } from '@/lib/menu-data'
 
@@ -81,6 +82,7 @@ export default function HomePage() {
           onClose={() => setSelectedDeal(null)}
         />
       )}
+      <WhatsAppButton />
     </>
   )
 }
